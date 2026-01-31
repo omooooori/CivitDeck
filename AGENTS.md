@@ -101,11 +101,11 @@ CivitDeck/
 
 ## Code Quality
 
-After making changes, always run lint and auto-fix before committing:
+After making changes, always run lint and static analysis before committing:
 
 ```bash
 ./gradlew ktlintFormat                # Auto-format code style
-./gradlew detekt                      # Run static analysis
+./gradlew detekt                      # Static analysis (fix violations manually)
 ```
 
 ## Git Commits
