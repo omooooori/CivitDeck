@@ -20,7 +20,7 @@ class ModelRepositoryImpl(
         type: ModelType?,
         sort: SortOrder?,
         period: TimePeriod?,
-        page: Int?,
+        cursor: String?,
         limit: Int?,
     ): PaginatedResult<Model> {
         val response = api.getModels(
@@ -29,7 +29,7 @@ class ModelRepositoryImpl(
             type = type?.name,
             sort = sort?.toApiParam(),
             period = period?.toApiParam(),
-            page = page,
+            cursor = cursor,
             limit = limit,
         )
         return PaginatedResult(

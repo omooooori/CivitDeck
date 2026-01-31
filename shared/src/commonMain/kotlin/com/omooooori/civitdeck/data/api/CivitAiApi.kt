@@ -23,7 +23,7 @@ class CivitAiApi(private val client: HttpClient) {
         type: String? = null,
         sort: String? = null,
         period: String? = null,
-        page: Int? = null,
+        cursor: String? = null,
         limit: Int? = null,
     ): ModelListResponse {
         return client.get("$BASE_URL/models") {
@@ -32,7 +32,7 @@ class CivitAiApi(private val client: HttpClient) {
             type?.let { parameter("types", it) }
             sort?.let { parameter("sort", it) }
             period?.let { parameter("period", it) }
-            page?.let { parameter("page", it) }
+            cursor?.let { parameter("cursor", it) }
             limit?.let { parameter("limit", it) }
         }.body()
     }

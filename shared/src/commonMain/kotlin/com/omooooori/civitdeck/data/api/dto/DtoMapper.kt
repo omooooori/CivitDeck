@@ -134,13 +134,8 @@ fun TagDto.toDomain(): Tag = Tag(
 )
 
 fun PaginationMetadataDto.toDomain(): PageMetadata = PageMetadata(
-    totalItems = totalItems,
-    currentPage = currentPage,
-    pageSize = pageSize,
-    totalPages = totalPages,
-    nextPage = nextPage,
-    prevPage = prevPage,
     nextCursor = nextCursor,
+    nextPage = nextPage,
 )
 
 private fun String.toModelType(): ModelType = try {
