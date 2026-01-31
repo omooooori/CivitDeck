@@ -19,9 +19,7 @@ CivitDeck is a mobile client for [CivitAI](https://civitai.com/) — the largest
 open iosApp/iosApp.xcodeproj          # Open in Xcode
 
 # Code Quality
-./gradlew ktlintCheck                 # Lint check
-./gradlew ktlintFormat                # Auto-format
-./gradlew detekt                      # Static analysis
+./gradlew detekt                      # Static analysis + auto-format (autoCorrect enabled)
 ```
 
 ## Architecture
@@ -101,11 +99,10 @@ CivitDeck/
 
 ## Code Quality
 
-After making changes, always run lint and static analysis before committing:
+After making changes, always run detekt before committing. It will auto-format code style and run static analysis:
 
 ```bash
-./gradlew ktlintFormat                # Auto-format code style
-./gradlew detekt                      # Static analysis (fix violations manually)
+./gradlew detekt                      # Auto-format + static analysis
 ```
 
 ## Git Commits
