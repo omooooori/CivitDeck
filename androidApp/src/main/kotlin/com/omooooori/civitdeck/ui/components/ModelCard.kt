@@ -19,7 +19,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.omooooori.civitdeck.domain.model.Model
-import com.omooooori.civitdeck.ui.util.FormatUtils
+import com.omooooori.civitdeck.util.FormatUtils
 
 @Composable
 fun ModelCard(
