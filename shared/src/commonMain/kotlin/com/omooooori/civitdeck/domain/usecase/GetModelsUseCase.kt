@@ -14,7 +14,7 @@ class GetModelsUseCase(private val repository: ModelRepository) {
         type: ModelType? = null,
         sort: SortOrder? = null,
         period: TimePeriod? = null,
-        page: Int? = null,
+        cursor: String? = null,
         limit: Int? = null,
     ): PaginatedResult<Model> = repository.getModels(
         query = query,
@@ -22,7 +22,7 @@ class GetModelsUseCase(private val repository: ModelRepository) {
         type = type,
         sort = sort,
         period = period,
-        page = page,
+        cursor = cursor,
         limit = limit,
     )
 }

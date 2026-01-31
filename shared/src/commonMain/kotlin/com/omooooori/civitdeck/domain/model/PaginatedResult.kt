@@ -6,11 +6,6 @@ data class PaginatedResult<T>(
 )
 
 data class PageMetadata(
-    val totalItems: Int?,
-    val currentPage: Int?,
-    val pageSize: Int?,
-    val totalPages: Int?,
-    val nextPage: String?,
-    val prevPage: String?,
     val nextCursor: String?,
+    val nextPage: String?,
 )

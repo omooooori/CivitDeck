@@ -17,9 +17,13 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -33,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -65,8 +70,15 @@ fun ModelSearchScreen(
     Scaffold(
         topBar = { TopAppBar(title = { Text("CivitDeck") }) },
     ) { padding ->
+        val layoutDirection = LocalLayoutDirection.current
         Column(
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    top = padding.calculateTopPadding(),
+                    start = padding.calculateLeftPadding(layoutDirection),
+                    end = padding.calculateRightPadding(layoutDirection),
+                ),
         ) {
             SearchBar(
                 query = uiState.query,
@@ -82,6 +94,7 @@ fun ModelSearchScreen(
                 gridState = gridState,
                 onRefresh = viewModel::refresh,
                 onModelClick = onModelClick,
+                bottomPadding = padding.calculateBottomPadding(),
             )
         }
     }
@@ -101,6 +114,13 @@ private fun SearchBar(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         placeholder = { Text("Search models...") },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(Icons.Default.Clear, contentDescription = "Clear")
+                }
+            }
+        },
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(
@@ -148,9 +168,10 @@ private fun ModelSearchContent(
     gridState: LazyGridState,
     onRefresh: () -> Unit,
     onModelClick: (Long) -> Unit,
+    bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
 ) {
     PullToRefreshBox(
-        isRefreshing = uiState.isLoading && uiState.models.isNotEmpty(),
+        isRefreshing = uiState.isRefreshing,
         onRefresh = onRefresh,
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -174,6 +195,7 @@ private fun ModelSearchContent(
                     gridState = gridState,
                     isLoadingMore = uiState.isLoadingMore,
                     onModelClick = onModelClick,
+                    bottomPadding = bottomPadding,
                 )
             }
         }
@@ -186,11 +208,17 @@ private fun ModelGrid(
     gridState: LazyGridState,
     isLoadingMore: Boolean,
     onModelClick: (Long) -> Unit,
+    bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         state = gridState,
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(
+            start = 16.dp,
+            end = 16.dp,
+            top = 16.dp,
+            bottom = 16.dp + bottomPadding,
+        ),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {

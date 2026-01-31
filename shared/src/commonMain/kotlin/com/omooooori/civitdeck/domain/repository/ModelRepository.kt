@@ -14,7 +14,7 @@ interface ModelRepository {
         type: ModelType? = null,
         sort: SortOrder? = null,
         period: TimePeriod? = null,
-        page: Int? = null,
+        cursor: String? = null,
         limit: Int? = null,
     ): PaginatedResult<Model>
 
