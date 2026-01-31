@@ -95,4 +95,10 @@ CivitDeck/
 
 ## Language
 
-Communicate in English for this project.
+All written content in this project must be in English, including:
+- Code comments and documentation strings
+- Git commit messages
+- Pull request titles, descriptions, and review comments
+- GitHub Issues (titles and body text)
+- CI/CD configuration comments
+- README and other documentation files
