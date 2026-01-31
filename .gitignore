@@ -20,7 +20,7 @@ local.properties
 iosApp/Pods/
 iosApp/*.xcworkspace
 iosApp/build/
-*.xcuserdata
+xcuserdata/
 DerivedData/
 
 ## Kotlin
