@@ -11,12 +11,12 @@ CivitDeck is a mobile client for [CivitAI](https://civitai.com/) — the largest
 ```bash
 # Android
 ./gradlew :androidApp:installDebug    # Build & install Android debug
+./gradlew :androidApp:assembleDebug   # Build Android debug APK
 ./gradlew :androidApp:assembleRelease # Build Android release APK
-./gradlew :shared:test                # Run shared module tests
+./gradlew :shared:testDebugUnitTest   # Run shared module tests
 
-# iOS
-cd iosApp && pod install              # Install iOS dependencies
-open CivitDeck.xcworkspace            # Open in Xcode
+# iOS (no CocoaPods — uses Kotlin/Native framework directly)
+open iosApp/iosApp.xcodeproj          # Open in Xcode
 
 # Code Quality
 ./gradlew ktlintCheck                 # Lint check
