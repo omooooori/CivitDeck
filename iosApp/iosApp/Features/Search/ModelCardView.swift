@@ -34,24 +34,27 @@ struct ModelCardView: View {
         Group {
             let url = model.modelVersions.first?.images.first?.url
             if let urlString = url, let imageUrl = URL(string: urlString) {
-                AsyncImage(url: imageUrl) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(1, contentMode: .fill)
-                    case .failure:
-                        imagePlaceholder
-                    case .empty:
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
-                            .aspectRatio(1, contentMode: .fit)
-                    @unknown default:
-                        imagePlaceholder
+                Color(.systemGray5)
+                    .aspectRatio(1, contentMode: .fit)
+                    .overlay {
+                        AsyncImage(url: imageUrl) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                            case .failure:
+                                Image(systemName: "photo")
+                                    .foregroundColor(.secondary)
+                            case .empty:
+                                ProgressView()
+                            @unknown default:
+                                Image(systemName: "photo")
+                                    .foregroundColor(.secondary)
+                            }
+                        }
                     }
-                }
-                .aspectRatio(1, contentMode: .fill)
-                .clipped()
+                    .clipped()
             } else {
                 imagePlaceholder
             }

@@ -11,56 +11,58 @@ struct ModelSearchScreen: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                if viewModel.isLoading && viewModel.models.isEmpty {
-                    ProgressView()
-                } else if let error = viewModel.error, viewModel.models.isEmpty {
-                    errorView(message: error)
-                } else if viewModel.models.isEmpty && !viewModel.isLoading {
-                    emptyView
-                } else {
-                    modelGrid
+            VStack(spacing: 0) {
+                searchBar
+                typeFilterChips
+
+                ZStack {
+                    if viewModel.isLoading && viewModel.models.isEmpty {
+                        ProgressView()
+                    } else if let error = viewModel.error, viewModel.models.isEmpty {
+                        errorView(message: error)
+                    } else if viewModel.models.isEmpty && !viewModel.isLoading {
+                        emptyView
+                    } else {
+                        modelGrid
+                    }
                 }
+                .frame(maxHeight: .infinity)
             }
             .navigationTitle("CivitDeck")
-            .searchable(
-                text: $viewModel.query,
-                prompt: "Search models..."
-            )
-            .onSubmit(of: .search) {
-                viewModel.onSearch()
-            }
-            .refreshable {
-                viewModel.refresh()
-            }
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button("All Types") {
-                            viewModel.onTypeSelected(nil)
-                        }
-                        ForEach(modelTypeOptions, id: \.self) { type in
-                            Button(type.name) {
-                                viewModel.onTypeSelected(type)
-                            }
-                        }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Text(viewModel.selectedType?.name ?? "All Types")
-                                .font(.caption)
-                            Image(systemName: "chevron.down")
-                                .font(.caption2)
-                        }
-                    }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.visible, for: .navigationBar)
+        }
+    }
+
+    private var searchBar: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.secondary)
+            TextField("Search models...", text: $viewModel.query)
+                .submitLabel(.search)
+                .onSubmit {
+                    viewModel.onSearch()
+                }
+            if !viewModel.query.isEmpty {
+                Button {
+                    viewModel.query = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.secondary)
                 }
             }
         }
+        .padding(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(.systemGray4), lineWidth: 1)
+        )
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
     }
 
     private var modelGrid: some View {
         ScrollView {
-            typeFilterChips
-
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(Array(viewModel.models.enumerated()), id: \.element.id) { index, model in
                     ModelCardView(model: model)
@@ -77,6 +79,9 @@ struct ModelSearchScreen: View {
                 ProgressView()
                     .padding()
             }
+        }
+        .refreshable {
+            viewModel.refresh()
         }
     }
 
