@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -50,9 +50,6 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build iOS framework
-        run: ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
-
       - name: Build iOS app
         run: |
           xcodebuild build \
@@ -60,5 +57,4 @@ jobs:
             -scheme iosApp \
             -sdk iphonesimulator \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-            OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED=YES \
             CODE_SIGNING_ALLOWED=NO
