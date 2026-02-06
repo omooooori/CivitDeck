@@ -109,6 +109,7 @@ private struct ZoomableImageView: View {
                                 }
                             }
                         }
+                        .transition(.opacity)
                 case .failure:
                     SwiftUI.Image(systemName: "photo")
                         .foregroundColor(.gray)
