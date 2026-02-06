@@ -77,10 +77,13 @@ struct ModelDetailScreen: View {
                                     img
                                         .resizable()
                                         .scaledToFill()
+                                        .transition(.opacity)
                                 case .failure:
                                     imagePlaceholder
                                 case .empty:
-                                    ProgressView()
+                                    Rectangle()
+                                        .fill(Color.civitSurfaceVariant)
+                                        .shimmer()
                                 @unknown default:
                                     imagePlaceholder
                                 }

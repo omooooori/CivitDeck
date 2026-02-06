@@ -25,6 +25,7 @@
 		CD0006052D000006000CD001 /* CivitDeckSpacing.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD0006042D000006000CD001 /* CivitDeckSpacing.swift */; };
 		CD0006072D000006000CD001 /* CivitDeckShapes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD0006062D000006000CD001 /* CivitDeckShapes.swift */; };
 		CD00060B2D000006000CD001 /* CivitDeckMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD00060A2D000006000CD001 /* CivitDeckMotion.swift */; };
+		CD0006112D000036000CD001 /* ShimmerModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD0006102D000036000CD001 /* ShimmerModifier.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -49,6 +50,7 @@
 		CD0006042D000006000CD001 /* CivitDeckSpacing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CivitDeckSpacing.swift; sourceTree = "<group>"; };
 		CD0006062D000006000CD001 /* CivitDeckShapes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CivitDeckShapes.swift; sourceTree = "<group>"; };
 		CD00060A2D000006000CD001 /* CivitDeckMotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CivitDeckMotion.swift; sourceTree = "<group>"; };
+		CD0006102D000036000CD001 /* ShimmerModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmerModifier.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -125,6 +127,7 @@
 				CD0006042D000006000CD001 /* CivitDeckSpacing.swift */,
 				CD0006062D000006000CD001 /* CivitDeckShapes.swift */,
 				CD00060A2D000006000CD001 /* CivitDeckMotion.swift */,
+				CD0006102D000036000CD001 /* ShimmerModifier.swift */,
 			);
 			path = DesignSystem;
 			sourceTree = "<group>";
@@ -278,6 +281,7 @@
 				CD0006052D000006000CD001 /* CivitDeckSpacing.swift in Sources */,
 				CD0006072D000006000CD001 /* CivitDeckShapes.swift in Sources */,
 				CD00060B2D000006000CD001 /* CivitDeckMotion.swift in Sources */,
+				CD0006112D000036000CD001 /* ShimmerModifier.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

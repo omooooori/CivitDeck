@@ -2,6 +2,7 @@ package com.riox432.civitdeck.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -25,11 +26,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
+import coil3.request.crossfade
 import com.riox432.civitdeck.domain.model.Model
 import com.riox432.civitdeck.ui.theme.CornerRadius
+import com.riox432.civitdeck.ui.theme.Duration
 import com.riox432.civitdeck.ui.theme.IconSize
 import com.riox432.civitdeck.ui.theme.Spacing
+import com.riox432.civitdeck.ui.theme.shimmer
 import com.riox432.civitdeck.util.FormatUtils
 
 @Composable
@@ -52,13 +56,26 @@ fun ModelCard(
                 .firstOrNull()?.images?.firstOrNull()?.url
 
             if (thumbnailUrl != null) {
-                AsyncImage(
-                    model = thumbnailUrl,
+                SubcomposeAsyncImage(
+                    model = coil3.request.ImageRequest.Builder(
+                        androidx.compose.ui.platform.LocalContext.current,
+                    )
+                        .data(thumbnailUrl)
+                        .crossfade(Duration.normal)
+                        .build(),
                     contentDescription = model.name,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1f),
+                    loading = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(1f)
+                                .shimmer(),
+                        )
+                    },
                 )
             }
 

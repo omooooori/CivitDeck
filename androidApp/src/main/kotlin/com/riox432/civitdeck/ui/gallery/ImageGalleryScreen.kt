@@ -39,13 +39,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.riox432.civitdeck.domain.model.Image
 import com.riox432.civitdeck.domain.model.SortOrder
 import com.riox432.civitdeck.domain.model.TimePeriod
 import com.riox432.civitdeck.ui.theme.CornerRadius
+import com.riox432.civitdeck.ui.theme.Duration
 import com.riox432.civitdeck.ui.theme.Spacing
+import com.riox432.civitdeck.ui.theme.shimmer
 
 @Composable
 fun ImageGalleryScreen(
@@ -283,8 +288,11 @@ private fun ImageGridItem(image: Image, onClick: () -> Unit) {
         1f
     }
 
-    AsyncImage(
-        model = image.url,
+    SubcomposeAsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(image.url)
+            .crossfade(Duration.normal)
+            .build(),
         contentDescription = null,
         contentScale = ContentScale.Crop,
         modifier = Modifier
@@ -292,6 +300,14 @@ private fun ImageGridItem(image: Image, onClick: () -> Unit) {
             .aspectRatio(aspectRatio)
             .clip(RoundedCornerShape(CornerRadius.image))
             .clickable(onClick = onClick),
+        loading = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(aspectRatio)
+                    .shimmer(),
+            )
+        },
     )
 }
 

@@ -147,6 +147,7 @@ struct ImageGalleryScreen: View {
                     img
                         .resizable()
                         .scaledToFill()
+                        .transition(.opacity)
                 case .failure:
                     Rectangle()
                         .fill(Color.civitSurfaceVariant)
@@ -156,8 +157,8 @@ struct ImageGalleryScreen: View {
                         }
                 case .empty:
                     Rectangle()
-                        .fill(Color.civitSurfaceContainerHigh)
-                        .overlay { ProgressView() }
+                        .fill(Color.civitSurfaceVariant)
+                        .shimmer()
                 @unknown default:
                     EmptyView()
                 }

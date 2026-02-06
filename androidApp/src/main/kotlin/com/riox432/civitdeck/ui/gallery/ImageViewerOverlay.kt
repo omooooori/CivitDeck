@@ -13,6 +13,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,9 +33,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.riox432.civitdeck.domain.model.Image
+import com.riox432.civitdeck.ui.theme.Duration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -141,8 +146,11 @@ private fun ZoomableImage(imageUrl: String) {
         }
     }
 
-    AsyncImage(
-        model = imageUrl,
+    SubcomposeAsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(imageUrl)
+            .crossfade(Duration.normal)
+            .build(),
         contentDescription = null,
         contentScale = ContentScale.Fit,
         modifier = Modifier
@@ -166,6 +174,14 @@ private fun ZoomableImage(imageUrl: String) {
                 translationX = offset.x,
                 translationY = offset.y,
             ),
+        loading = {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(color = Color.White)
+            }
+        },
     )
 }
 

@@ -42,11 +42,14 @@ struct ModelCardView: View {
                                 image
                                     .resizable()
                                     .scaledToFill()
+                                    .transition(.opacity)
                             case .failure:
                                 Image(systemName: "photo")
                                     .foregroundColor(.civitOnSurfaceVariant)
                             case .empty:
-                                ProgressView()
+                                Rectangle()
+                                    .fill(Color.civitSurfaceVariant)
+                                    .shimmer()
                             @unknown default:
                                 Image(systemName: "photo")
                                     .foregroundColor(.civitOnSurfaceVariant)
