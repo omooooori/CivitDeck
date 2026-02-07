@@ -14,6 +14,7 @@ struct ModelSearchScreen: View {
             VStack(spacing: 0) {
                 searchBar
                 typeFilterChips
+                sortAndPeriodChips
 
                 ZStack {
                     if viewModel.isLoading && viewModel.models.isEmpty {
@@ -117,6 +118,25 @@ struct ModelSearchScreen: View {
         }
     }
 
+    private var sortAndPeriodChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: Spacing.sm) {
+                ForEach(sortOptions, id: \.self) { sort in
+                    chipButton(label: sortLabel(sort), isSelected: viewModel.selectedSort == sort) {
+                        viewModel.onSortSelected(sort)
+                    }
+                }
+                ForEach(periodOptions, id: \.self) { period in
+                    chipButton(label: periodLabel(period), isSelected: viewModel.selectedPeriod == period) {
+                        viewModel.onPeriodSelected(period)
+                    }
+                }
+            }
+            .padding(.horizontal, Spacing.lg)
+            .padding(.bottom, Spacing.sm)
+        }
+    }
+
     private func chipButton(label: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
@@ -156,6 +176,27 @@ struct ModelSearchScreen: View {
             Text("No models found")
                 .foregroundColor(.civitOnSurfaceVariant)
         }
+    }
+}
+
+private let sortOptions: [CivitSortOrder] = [.mostDownloaded, .highestRated, .newest]
+private let periodOptions: [TimePeriod] = [.allTime, .year, .month, .week, .day]
+
+private func sortLabel(_ sort: CivitSortOrder) -> String {
+    switch sort {
+    case .highestRated: return "Highest Rated"
+    case .mostDownloaded: return "Most Downloaded"
+    case .newest: return "Newest"
+    }
+}
+
+private func periodLabel(_ period: TimePeriod) -> String {
+    switch period {
+    case .allTime: return "All"
+    case .year: return "Year"
+    case .month: return "Month"
+    case .week: return "Week"
+    case .day: return "Day"
     }
 }
 
