@@ -133,9 +133,11 @@ struct ModelDetailScreen: View {
                     .clipShape(Capsule())
 
                 if let creator = model.creator {
-                    Text("by \(creator.username)")
-                        .font(.civitBodyMedium)
-                        .foregroundColor(.civitOnSurfaceVariant)
+                    NavigationLink(value: creator.username) {
+                        Text("by \(creator.username)")
+                            .font(.civitBodyMedium)
+                            .foregroundColor(.civitPrimary)
+                    }
                 }
             }
         }

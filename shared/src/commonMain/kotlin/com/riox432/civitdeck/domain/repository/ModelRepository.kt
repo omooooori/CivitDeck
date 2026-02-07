@@ -16,6 +16,7 @@ interface ModelRepository {
         period: TimePeriod? = null,
         cursor: String? = null,
         limit: Int? = null,
+        username: String? = null,
     ): PaginatedResult<Model>
 
     suspend fun getModel(id: Long): Model
