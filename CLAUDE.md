@@ -2,6 +2,10 @@
 
 Strictly follow the rules in [AGENTS.md](./AGENTS.md).
 
+## Think Twice
+
+Before acting, always pause and reconsider. Re-read the requirements, re-check your assumptions, and verify your approach is correct before writing any code.
+
 ## Research-First Development
 
 Never design or implement based on guesses or assumptions. Always follow this order:
