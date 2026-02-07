@@ -4,9 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.riox432.civitdeck.domain.model.Model
 import com.riox432.civitdeck.domain.model.ModelType
+import com.riox432.civitdeck.domain.model.NsfwFilterLevel
 import com.riox432.civitdeck.domain.model.SortOrder
 import com.riox432.civitdeck.domain.model.TimePeriod
 import com.riox432.civitdeck.domain.usecase.GetModelsUseCase
+import com.riox432.civitdeck.domain.usecase.ObserveNsfwFilterUseCase
+import com.riox432.civitdeck.domain.usecase.SetNsfwFilterUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +24,7 @@ data class ModelSearchUiState(
     val selectedType: ModelType? = null,
     val selectedSort: SortOrder = SortOrder.MostDownloaded,
     val selectedPeriod: TimePeriod = TimePeriod.AllTime,
+    val nsfwFilterLevel: NsfwFilterLevel = NsfwFilterLevel.Off,
     val isLoading: Boolean = false,
     val isLoadingMore: Boolean = false,
     val isRefreshing: Boolean = false,
@@ -31,6 +35,8 @@ data class ModelSearchUiState(
 
 class ModelSearchViewModel(
     private val getModelsUseCase: GetModelsUseCase,
+    private val observeNsfwFilterUseCase: ObserveNsfwFilterUseCase,
+    private val setNsfwFilterUseCase: SetNsfwFilterUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ModelSearchUiState())
@@ -39,6 +45,26 @@ class ModelSearchViewModel(
     private var loadJob: Job? = null
 
     init {
+        observeNsfwFilter()
+        loadModels()
+    }
+
+    private fun observeNsfwFilter() {
+        viewModelScope.launch {
+            observeNsfwFilterUseCase().collect { level ->
+                _uiState.update { it.copy(nsfwFilterLevel = level) }
+            }
+        }
+    }
+
+    fun onNsfwFilterChanged(level: NsfwFilterLevel) {
+        viewModelScope.launch {
+            setNsfwFilterUseCase(level)
+        }
+        loadJob?.cancel()
+        _uiState.update {
+            it.copy(nextCursor = null, models = emptyList(), hasMore = true)
+        }
         loadModels()
     }
 
@@ -109,9 +135,10 @@ class ModelSearchViewModel(
                     cursor = if (isLoadMore) state.nextCursor else null,
                     limit = PAGE_SIZE,
                 )
+                val filteredItems = filterNsfw(result.items, state.nsfwFilterLevel)
                 _uiState.update {
                     it.copy(
-                        models = if (isLoadMore) it.models + result.items else result.items,
+                        models = if (isLoadMore) it.models + filteredItems else filteredItems,
                         isLoading = false,
                         isLoadingMore = false,
                         isRefreshing = false,
@@ -134,6 +161,13 @@ class ModelSearchViewModel(
             }
         }
     }
+
+    private fun filterNsfw(models: List<Model>, level: NsfwFilterLevel): List<Model> =
+        when (level) {
+            NsfwFilterLevel.Off -> models.filter { !it.nsfw }
+            NsfwFilterLevel.Soft -> models
+            NsfwFilterLevel.All -> models
+        }
 
     companion object {
         private const val PAGE_SIZE = 20
