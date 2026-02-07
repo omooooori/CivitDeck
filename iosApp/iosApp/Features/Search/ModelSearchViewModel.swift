@@ -10,8 +10,10 @@ final class ModelSearchViewModel: ObservableObject {
     @Published var isLoadingMore: Bool = false
     @Published var error: String? = nil
     @Published var hasMore: Bool = true
+    @Published var recommendations: [RecommendationSection] = []
 
     private let getModelsUseCase: GetModelsUseCase
+    private let getRecommendationsUseCase: GetRecommendationsUseCase
     private var nextCursor: String? = nil
     private var loadTask: Task<Void, Never>? = nil
 
@@ -19,7 +21,20 @@ final class ModelSearchViewModel: ObservableObject {
 
     init() {
         self.getModelsUseCase = KoinHelper.shared.getModelsUseCase()
+        self.getRecommendationsUseCase = KoinHelper.shared.getRecommendationsUseCase()
         loadModels()
+        loadRecommendations()
+    }
+
+    private func loadRecommendations() {
+        Task {
+            do {
+                let sections = try await getRecommendationsUseCase.invoke()
+                recommendations = sections
+            } catch {
+                // Non-critical, silently fail
+            }
+        }
     }
 
     func onSearch() {
