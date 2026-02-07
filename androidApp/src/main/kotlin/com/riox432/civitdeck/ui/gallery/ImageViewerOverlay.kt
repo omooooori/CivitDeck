@@ -41,15 +41,20 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import com.riox432.civitdeck.domain.model.Image
+import com.riox432.civitdeck.domain.model.ImageGenerationMeta
 import com.riox432.civitdeck.ui.theme.Duration
 import com.riox432.civitdeck.ui.theme.Spring
 import kotlinx.coroutines.launch
 
+data class ViewerImage(
+    val url: String,
+    val meta: ImageGenerationMeta? = null,
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ImageViewerOverlay(
-    images: List<Image>,
+    images: List<ViewerImage>,
     initialIndex: Int,
     onDismiss: () -> Unit,
 ) {
@@ -70,10 +75,12 @@ fun ImageViewerOverlay(
                 )
             },
     ) {
-        ImagePager(
-            images = images,
-            pagerState = pagerState,
-        )
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+        ) { page ->
+            ZoomableImage(imageUrl = images[page].url)
+        }
 
         AnimatedVisibility(
             visible = controlsVisible,
@@ -97,19 +104,6 @@ fun ImageViewerOverlay(
                 onDismiss = { showMetadata = false },
             )
         }
-    }
-}
-
-@Composable
-private fun ImagePager(
-    images: List<Image>,
-    pagerState: androidx.compose.foundation.pager.PagerState,
-) {
-    HorizontalPager(
-        state = pagerState,
-        modifier = Modifier.fillMaxSize(),
-    ) { page ->
-        ZoomableImage(imageUrl = images[page].url)
     }
 }
 
