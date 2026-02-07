@@ -1,5 +1,6 @@
 package com.riox432.civitdeck.ui.components
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,9 +27,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.crossfade
 import com.riox432.civitdeck.domain.model.Model
+import com.riox432.civitdeck.ui.navigation.LocalSharedTransitionScope
+import com.riox432.civitdeck.ui.navigation.SharedElementKeys
 import com.riox432.civitdeck.ui.theme.CornerRadius
 import com.riox432.civitdeck.ui.theme.Duration
 import com.riox432.civitdeck.ui.theme.IconSize
@@ -36,6 +40,7 @@ import com.riox432.civitdeck.ui.theme.Spacing
 import com.riox432.civitdeck.ui.theme.shimmer
 import com.riox432.civitdeck.util.FormatUtils
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ModelCard(
     model: Model,
@@ -56,6 +61,27 @@ fun ModelCard(
                 .firstOrNull()?.images?.firstOrNull()?.url
 
             if (thumbnailUrl != null) {
+                val sharedTransitionScope = LocalSharedTransitionScope.current
+                val animatedContentScope = LocalNavAnimatedContentScope.current
+
+                val imageModifier = if (sharedTransitionScope != null) {
+                    with(sharedTransitionScope) {
+                        Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                            .sharedElement(
+                                rememberSharedContentState(
+                                    key = SharedElementKeys.modelThumbnail(model.id),
+                                ),
+                                animatedVisibilityScope = animatedContentScope,
+                            )
+                    }
+                } else {
+                    Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                }
+
                 SubcomposeAsyncImage(
                     model = coil3.request.ImageRequest.Builder(
                         androidx.compose.ui.platform.LocalContext.current,
@@ -65,9 +91,7 @@ fun ModelCard(
                         .build(),
                     contentDescription = model.name,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f),
+                    modifier = imageModifier,
                     loading = {
                         Box(
                             modifier = Modifier

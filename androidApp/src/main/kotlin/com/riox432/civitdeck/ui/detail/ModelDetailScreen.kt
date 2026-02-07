@@ -2,9 +2,14 @@ package com.riox432.civitdeck.ui.detail
 
 import android.content.Intent
 import android.text.Html
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,6 +60,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
@@ -62,6 +68,8 @@ import com.riox432.civitdeck.domain.model.Model
 import com.riox432.civitdeck.domain.model.ModelFile
 import com.riox432.civitdeck.domain.model.ModelImage
 import com.riox432.civitdeck.domain.model.ModelVersion
+import com.riox432.civitdeck.ui.navigation.LocalSharedTransitionScope
+import com.riox432.civitdeck.ui.navigation.SharedElementKeys
 import com.riox432.civitdeck.ui.theme.Duration
 import com.riox432.civitdeck.ui.theme.Easing
 import com.riox432.civitdeck.ui.theme.Spacing
@@ -71,6 +79,8 @@ import com.riox432.civitdeck.util.FormatUtils
 @Composable
 fun ModelDetailScreen(
     viewModel: ModelDetailViewModel,
+    modelId: Long,
+    initialThumbnailUrl: String?,
     onBack: () -> Unit,
     onViewImages: (Long) -> Unit = {},
 ) {
@@ -87,6 +97,8 @@ fun ModelDetailScreen(
     ) { padding ->
         ModelDetailBody(
             uiState = uiState,
+            modelId = modelId,
+            initialThumbnailUrl = initialThumbnailUrl,
             onRetry = viewModel::retry,
             onVersionSelected = viewModel::onVersionSelected,
             onViewImages = onViewImages,
@@ -148,33 +160,84 @@ private fun ModelDetailTopBar(
     )
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ModelDetailBody(
     uiState: ModelDetailUiState,
+    modelId: Long,
+    initialThumbnailUrl: String?,
     onRetry: () -> Unit,
     onVersionSelected: (Int) -> Unit,
     onViewImages: (Long) -> Unit,
     contentPadding: PaddingValues,
 ) {
+    val model = uiState.model
+    val selectedVersion = model?.modelVersions?.getOrNull(uiState.selectedVersionIndex)
+    val images = selectedVersion?.images ?: emptyList()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = contentPadding.calculateTopPadding()),
+    ) {
+        // Shared element image — always in composition tree
+        when {
+            model != null -> {
+                ImageCarousel(
+                    images = images,
+                    modelId = modelId,
+                )
+            }
+            initialThumbnailUrl != null -> {
+                SharedThumbnailPlaceholder(
+                    thumbnailUrl = initialThumbnailUrl,
+                    modelId = modelId,
+                )
+            }
+        }
+
+        DetailStateContent(
+            uiState = uiState,
+            model = model,
+            onRetry = onRetry,
+            onVersionSelected = onVersionSelected,
+            onViewImages = onViewImages,
+            bottomPadding = contentPadding.calculateBottomPadding(),
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun DetailStateContent(
+    uiState: ModelDetailUiState,
+    model: Model?,
+    onRetry: () -> Unit,
+    onVersionSelected: (Int) -> Unit,
+    onViewImages: (Long) -> Unit,
+    bottomPadding: androidx.compose.ui.unit.Dp,
+    modifier: Modifier = Modifier,
+) {
     val stateKey = when {
         uiState.isLoading -> "loading"
         uiState.error != null -> "error"
-        uiState.model != null -> "content"
+        model != null -> "content"
         else -> "loading"
     }
 
-    Crossfade(
+    AnimatedContent(
         targetState = stateKey,
-        animationSpec = tween(
-            durationMillis = Duration.normal,
-            easing = Easing.standard,
-        ),
+        transitionSpec = {
+            fadeIn(tween(Duration.normal, easing = Easing.standard)) togetherWith
+                fadeOut(tween(Duration.normal, easing = Easing.standard))
+        },
+        modifier = modifier,
         label = "detailBody",
     ) { state ->
         when (state) {
             "loading" -> {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(contentPadding),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator()
@@ -182,7 +245,7 @@ private fun ModelDetailBody(
             }
             "error" -> {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(contentPadding),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -198,13 +261,13 @@ private fun ModelDetailBody(
                 }
             }
             else -> {
-                if (uiState.model != null) {
-                    ModelDetailContent(
-                        model = uiState.model!!,
+                if (model != null) {
+                    ModelDetailContentBody(
+                        model = model,
                         selectedVersionIndex = uiState.selectedVersionIndex,
                         onVersionSelected = onVersionSelected,
                         onViewImages = onViewImages,
-                        contentPadding = contentPadding,
+                        bottomPadding = bottomPadding,
                     )
                 }
             }
@@ -212,28 +275,67 @@ private fun ModelDetailBody(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun ModelDetailContent(
+private fun SharedThumbnailPlaceholder(
+    thumbnailUrl: String,
+    modelId: Long,
+) {
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+    val animatedContentScope = LocalNavAnimatedContentScope.current
+
+    val imageModifier = if (sharedTransitionScope != null) {
+        with(sharedTransitionScope) {
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(CAROUSEL_ASPECT_RATIO)
+                .sharedElement(
+                    rememberSharedContentState(
+                        key = SharedElementKeys.modelThumbnail(modelId),
+                    ),
+                    animatedVisibilityScope = animatedContentScope,
+                )
+        }
+    } else {
+        Modifier
+            .fillMaxWidth()
+            .aspectRatio(CAROUSEL_ASPECT_RATIO)
+    }
+
+    SubcomposeAsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(thumbnailUrl)
+            .crossfade(Duration.normal)
+            .build(),
+        contentDescription = null,
+        contentScale = ContentScale.Fit,
+        modifier = imageModifier
+            .background(MaterialTheme.colorScheme.surfaceContainerLow),
+        loading = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(CAROUSEL_ASPECT_RATIO)
+                    .shimmer(),
+            )
+        },
+    )
+}
+
+@Composable
+private fun ModelDetailContentBody(
     model: Model,
     selectedVersionIndex: Int,
     onVersionSelected: (Int) -> Unit,
     onViewImages: (Long) -> Unit,
-    contentPadding: PaddingValues,
+    bottomPadding: androidx.compose.ui.unit.Dp,
 ) {
     val selectedVersion = model.modelVersions.getOrNull(selectedVersionIndex)
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            top = contentPadding.calculateTopPadding(),
-            bottom = contentPadding.calculateBottomPadding() + Spacing.lg,
-        ),
+        contentPadding = PaddingValues(bottom = bottomPadding + Spacing.lg),
     ) {
-        // Image carousel
-        item {
-            ImageCarousel(images = selectedVersion?.images ?: emptyList())
-        }
-
         // Model header
         item {
             ModelHeader(model = model)
@@ -301,8 +403,12 @@ private fun ViewImagesButton(onClick: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun ImageCarousel(images: List<ModelImage>) {
+private fun ImageCarousel(
+    images: List<ModelImage>,
+    modelId: Long,
+) {
     if (images.isEmpty()) return
 
     val pagerState = rememberPagerState { images.size }
@@ -312,25 +418,10 @@ private fun ImageCarousel(images: List<ModelImage>) {
             state = pagerState,
             modifier = Modifier.fillMaxWidth(),
         ) { page ->
-            SubcomposeAsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(images[page].url)
-                    .crossfade(Duration.normal)
-                    .build(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .clip(MaterialTheme.shapes.medium),
-                loading = {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(1f)
-                            .shimmer(),
-                    )
-                },
+            CarouselPage(
+                image = images[page],
+                modelId = modelId,
+                applySharedElement = page == pagerState.currentPage,
             )
         }
 
@@ -344,6 +435,56 @@ private fun ImageCarousel(images: List<ModelImage>) {
             )
         }
     }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun CarouselPage(
+    image: ModelImage,
+    modelId: Long,
+    applySharedElement: Boolean,
+) {
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+    val animatedContentScope = LocalNavAnimatedContentScope.current
+
+    val pageModifier = if (applySharedElement && sharedTransitionScope != null) {
+        with(sharedTransitionScope) {
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(CAROUSEL_ASPECT_RATIO)
+                .clip(MaterialTheme.shapes.medium)
+                .sharedElement(
+                    rememberSharedContentState(
+                        key = SharedElementKeys.modelThumbnail(modelId),
+                    ),
+                    animatedVisibilityScope = animatedContentScope,
+                )
+        }
+    } else {
+        Modifier
+            .fillMaxWidth()
+            .aspectRatio(CAROUSEL_ASPECT_RATIO)
+            .clip(MaterialTheme.shapes.medium)
+    }
+
+    SubcomposeAsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(image.url)
+            .crossfade(Duration.normal)
+            .build(),
+        contentDescription = null,
+        contentScale = ContentScale.Fit,
+        modifier = pageModifier
+            .background(MaterialTheme.colorScheme.surfaceContainerLow),
+        loading = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(CAROUSEL_ASPECT_RATIO)
+                    .shimmer(),
+            )
+        },
+    )
 }
 
 @Composable
@@ -480,6 +621,7 @@ private fun DescriptionSection(description: String) {
     }
 }
 
+private const val CAROUSEL_ASPECT_RATIO = 1f
 private const val DESCRIPTION_COLLAPSED_LINES = 4
 
 @Composable
