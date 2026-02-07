@@ -1,5 +1,7 @@
 package com.riox432.civitdeck.di
 
+import com.riox432.civitdeck.domain.usecase.AddSearchHistoryUseCase
+import com.riox432.civitdeck.domain.usecase.ClearSearchHistoryUseCase
 import com.riox432.civitdeck.domain.usecase.DeleteSavedPromptUseCase
 import com.riox432.civitdeck.domain.usecase.GetCreatorModelsUseCase
 import com.riox432.civitdeck.domain.usecase.GetImagesUseCase
@@ -9,6 +11,7 @@ import com.riox432.civitdeck.domain.usecase.ObserveFavoritesUseCase
 import com.riox432.civitdeck.domain.usecase.ObserveIsFavoriteUseCase
 import com.riox432.civitdeck.domain.usecase.ObserveNsfwFilterUseCase
 import com.riox432.civitdeck.domain.usecase.ObserveSavedPromptsUseCase
+import com.riox432.civitdeck.domain.usecase.ObserveSearchHistoryUseCase
 import com.riox432.civitdeck.domain.usecase.SavePromptUseCase
 import com.riox432.civitdeck.domain.usecase.SetNsfwFilterUseCase
 import com.riox432.civitdeck.domain.usecase.ToggleFavoriteUseCase
@@ -27,4 +30,7 @@ val domainModule = module {
     factory { SavePromptUseCase(get()) }
     factory { ObserveSavedPromptsUseCase(get()) }
     factory { DeleteSavedPromptUseCase(get()) }
+    factory { ObserveSearchHistoryUseCase(get()) }
+    factory { AddSearchHistoryUseCase(get()) }
+    factory { ClearSearchHistoryUseCase(get()) }
 }
