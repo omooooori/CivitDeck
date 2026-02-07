@@ -18,6 +18,7 @@ final class ImageGalleryViewModel: ObservableObject {
 
     private let modelVersionId: Int64
     private let getImagesUseCase: GetImagesUseCase
+    private let savePromptUseCase: SavePromptUseCase
     private var nextCursor: String? = nil
     private var loadTask: Task<Void, Never>? = nil
 
@@ -27,6 +28,7 @@ final class ImageGalleryViewModel: ObservableObject {
     init(modelVersionId: Int64) {
         self.modelVersionId = modelVersionId
         self.getImagesUseCase = KoinHelper.shared.getImagesUseCase()
+        self.savePromptUseCase = KoinHelper.shared.getSavePromptUseCase()
         loadImages()
     }
 
@@ -72,6 +74,12 @@ final class ImageGalleryViewModel: ObservableObject {
 
     func retry() {
         loadImages()
+    }
+
+    func savePrompt(meta: ImageGenerationMeta, sourceImageUrl: String) {
+        Task {
+            try await savePromptUseCase.invoke(meta: meta, sourceImageUrl: sourceImageUrl)
+        }
     }
 
     private func loadImages(isLoadMore: Bool = false) {

@@ -84,6 +84,7 @@ fun ImageGalleryScreen(
             images = uiState.images,
             initialIndex = uiState.selectedImageIndex!!,
             onDismiss = viewModel::onDismissViewer,
+            onSavePrompt = viewModel::savePrompt,
         )
     }
 }
