@@ -64,7 +64,7 @@ import com.riox432.civitdeck.ui.theme.Spacing
 @Composable
 fun ModelSearchScreen(
     viewModel: ModelSearchViewModel,
-    onModelClick: (Long) -> Unit = {},
+    onModelClick: (Long, String?) -> Unit = { _, _ -> },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val gridState = rememberLazyGridState()
@@ -233,7 +233,7 @@ private fun ModelSearchContent(
     uiState: ModelSearchUiState,
     gridState: LazyGridState,
     onRefresh: () -> Unit,
-    onModelClick: (Long) -> Unit,
+    onModelClick: (Long, String?) -> Unit,
     bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
 ) {
     val stateKey = when {
@@ -288,7 +288,7 @@ private fun ModelGrid(
     models: List<Model>,
     gridState: LazyGridState,
     isLoadingMore: Boolean,
-    onModelClick: (Long) -> Unit,
+    onModelClick: (Long, String?) -> Unit,
     bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
 ) {
     LazyVerticalGrid(
@@ -304,9 +304,11 @@ private fun ModelGrid(
         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {
         items(items = models, key = { it.id }) { model ->
+            val thumbnailUrl = model.modelVersions
+                .firstOrNull()?.images?.firstOrNull()?.url
             ModelCard(
                 model = model,
-                onClick = { onModelClick(model.id) },
+                onClick = { onModelClick(model.id, thumbnailUrl) },
                 modifier = Modifier.animateItem(),
             )
         }

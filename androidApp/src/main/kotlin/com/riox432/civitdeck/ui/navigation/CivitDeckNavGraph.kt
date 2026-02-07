@@ -1,11 +1,9 @@
 package com.riox432.civitdeck.ui.navigation
 
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -18,45 +16,32 @@ import com.riox432.civitdeck.ui.gallery.ImageGalleryScreen
 import com.riox432.civitdeck.ui.gallery.ImageGalleryViewModel
 import com.riox432.civitdeck.ui.search.ModelSearchScreen
 import com.riox432.civitdeck.ui.search.ModelSearchViewModel
-import com.riox432.civitdeck.ui.theme.Duration
-import com.riox432.civitdeck.ui.theme.Easing
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 data object SearchRoute
 
-data class DetailRoute(val modelId: Long)
+data class DetailRoute(val modelId: Long, val thumbnailUrl: String? = null)
 
 data class ImageGalleryRoute(val modelVersionId: Long)
 
-private val navTween = androidx.compose.animation.core.tween<androidx.compose.ui.unit.IntOffset>(
-    durationMillis = Duration.normal,
-    easing = Easing.standard,
-)
-private val navFadeTween = androidx.compose.animation.core.tween<Float>(
-    durationMillis = Duration.normal,
-    easing = Easing.standard,
-)
-
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun CivitDeckNavGraph() {
     val backStack = remember { mutableStateListOf<Any>(SearchRoute) }
 
+    SharedTransitionLayout {
+        CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+            CivitDeckNavDisplay(backStack)
+        }
+    }
+}
+
+@Composable
+private fun CivitDeckNavDisplay(backStack: MutableList<Any>) {
     NavDisplay(
         backStack = backStack,
         onBack = { backStack.removeLastOrNull() },
-        transitionSpec = {
-            (fadeIn(navFadeTween) + slideInHorizontally(navTween) { it / 4 }) togetherWith
-                (fadeOut(navFadeTween) + slideOutHorizontally(navTween) { -it / 4 })
-        },
-        popTransitionSpec = {
-            (fadeIn(navFadeTween) + slideInHorizontally(navTween) { -it / 4 }) togetherWith
-                (fadeOut(navFadeTween) + slideOutHorizontally(navTween) { it / 4 })
-        },
-        predictivePopTransitionSpec = {
-            (fadeIn(navFadeTween) + slideInHorizontally(navTween) { -it / 4 }) togetherWith
-                (fadeOut(navFadeTween) + slideOutHorizontally(navTween) { it / 4 })
-        },
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator(),
@@ -66,7 +51,9 @@ fun CivitDeckNavGraph() {
                 val viewModel: ModelSearchViewModel = koinViewModel()
                 ModelSearchScreen(
                     viewModel = viewModel,
-                    onModelClick = { modelId -> backStack.add(DetailRoute(modelId)) },
+                    onModelClick = { modelId, thumbnailUrl ->
+                        backStack.add(DetailRoute(modelId, thumbnailUrl))
+                    },
                 )
             }
             entry<DetailRoute> { key ->
@@ -75,8 +62,12 @@ fun CivitDeckNavGraph() {
                 ) { parametersOf(key.modelId) }
                 ModelDetailScreen(
                     viewModel = viewModel,
+                    modelId = key.modelId,
+                    initialThumbnailUrl = key.thumbnailUrl,
                     onBack = { backStack.removeLastOrNull() },
-                    onViewImages = { modelVersionId -> backStack.add(ImageGalleryRoute(modelVersionId)) },
+                    onViewImages = { modelVersionId ->
+                        backStack.add(ImageGalleryRoute(modelVersionId))
+                    },
                 )
             }
             entry<ImageGalleryRoute> { key ->
