@@ -8,6 +8,7 @@ struct ImageViewerScreen: View {
 
     @State private var showMetadata = false
     @State private var controlsVisible = true
+    @State private var showShareSheet = false
 
     var body: some View {
         if let index = selectedIndex {
@@ -42,6 +43,12 @@ struct ImageViewerScreen: View {
                     .presentationDetents([.medium, .large])
                 }
             }
+            .sheet(isPresented: $showShareSheet) {
+                if let image = images[safe: index] {
+                    let text = Self.formatShareText(imageUrl: image.url, meta: image.meta)
+                    ShareSheet(items: [text])
+                }
+            }
         }
     }
 
@@ -66,9 +73,18 @@ struct ImageViewerScreen: View {
 
             Spacer()
 
-            if images[safe: currentIndex]?.meta != nil {
-                HStack {
-                    Spacer()
+            HStack {
+                Spacer()
+                Button {
+                    showShareSheet = true
+                } label: {
+                    SwiftUI.Image(systemName: "square.and.arrow.up")
+                        .font(.title3)
+                        .foregroundColor(.white)
+                        .padding(10)
+                        .background(.ultraThinMaterial, in: Circle())
+                }
+                if images[safe: currentIndex]?.meta != nil {
                     Button {
                         showMetadata = true
                     } label: {
@@ -79,10 +95,47 @@ struct ImageViewerScreen: View {
                             .background(.ultraThinMaterial, in: Circle())
                     }
                 }
-                .padding(16)
             }
+            .padding(16)
         }
     }
+
+    // MARK: - Share Text
+
+    static func formatShareText(imageUrl: String, meta: ImageGenerationMeta?) -> String {
+        var text = imageUrl + "\n"
+        if let meta {
+            text += "\n"
+            if let prompt = meta.prompt {
+                text += "Prompt: \(prompt)\n"
+            }
+            if let negative = meta.negativePrompt {
+                text += "Negative: \(negative)\n"
+            }
+            var params: [String] = []
+            if let model = meta.model { params.append("Model: \(model)") }
+            if let steps = meta.steps { params.append("Steps: \(steps)") }
+            if let cfg = meta.cfgScale { params.append("CFG: \(cfg)") }
+            if let sampler = meta.sampler { params.append("Sampler: \(sampler)") }
+            if !params.isEmpty {
+                text += params.joined(separator: " | ") + "\n"
+            }
+        }
+        text += "\nShared via CivitDeck"
+        return text
+    }
+}
+
+// MARK: - Share Sheet
+
+private struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 // MARK: - Zoomable Image
