@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.riox432.civitdeck.domain.model.Model
 import com.riox432.civitdeck.domain.model.ModelType
+import com.riox432.civitdeck.domain.model.RecommendationSection
 import com.riox432.civitdeck.domain.model.SortOrder
 import com.riox432.civitdeck.domain.model.TimePeriod
 import com.riox432.civitdeck.domain.usecase.GetModelsUseCase
+import com.riox432.civitdeck.domain.usecase.GetRecommendationsUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,10 +29,13 @@ data class ModelSearchUiState(
     val error: String? = null,
     val nextCursor: String? = null,
     val hasMore: Boolean = true,
+    val recommendations: List<RecommendationSection> = emptyList(),
+    val isLoadingRecommendations: Boolean = false,
 )
 
 class ModelSearchViewModel(
     private val getModelsUseCase: GetModelsUseCase,
+    private val getRecommendationsUseCase: GetRecommendationsUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ModelSearchUiState())
@@ -40,6 +45,21 @@ class ModelSearchViewModel(
 
     init {
         loadModels()
+        loadRecommendations()
+    }
+
+    private fun loadRecommendations() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingRecommendations = true) }
+            try {
+                val sections = getRecommendationsUseCase()
+                _uiState.update {
+                    it.copy(recommendations = sections, isLoadingRecommendations = false)
+                }
+            } catch (_: Exception) {
+                _uiState.update { it.copy(isLoadingRecommendations = false) }
+            }
+        }
     }
 
     fun onQueryChange(query: String) {

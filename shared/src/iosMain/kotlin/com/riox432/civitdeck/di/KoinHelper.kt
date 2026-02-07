@@ -3,9 +3,11 @@ package com.riox432.civitdeck.di
 import com.riox432.civitdeck.domain.usecase.GetImagesUseCase
 import com.riox432.civitdeck.domain.usecase.GetModelDetailUseCase
 import com.riox432.civitdeck.domain.usecase.GetModelsUseCase
+import com.riox432.civitdeck.domain.usecase.GetRecommendationsUseCase
 import com.riox432.civitdeck.domain.usecase.ObserveFavoritesUseCase
 import com.riox432.civitdeck.domain.usecase.ObserveIsFavoriteUseCase
 import com.riox432.civitdeck.domain.usecase.ToggleFavoriteUseCase
+import com.riox432.civitdeck.domain.usecase.TrackModelViewUseCase
 import org.koin.mp.KoinPlatform.getKoin
 
 object KoinHelper {
@@ -15,4 +17,6 @@ object KoinHelper {
     fun getToggleFavoriteUseCase(): ToggleFavoriteUseCase = getKoin().get()
     fun getObserveFavoritesUseCase(): ObserveFavoritesUseCase = getKoin().get()
     fun getObserveIsFavoriteUseCase(): ObserveIsFavoriteUseCase = getKoin().get()
+    fun getTrackModelViewUseCase(): TrackModelViewUseCase = getKoin().get()
+    fun getRecommendationsUseCase(): GetRecommendationsUseCase = getKoin().get()
 }

@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -54,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riox432.civitdeck.domain.model.Model
 import com.riox432.civitdeck.domain.model.ModelType
+import com.riox432.civitdeck.domain.model.RecommendationSection
 import com.riox432.civitdeck.ui.components.ModelCard
 import com.riox432.civitdeck.ui.theme.CornerRadius
 import com.riox432.civitdeck.ui.theme.Duration
@@ -272,6 +275,7 @@ private fun ModelSearchContent(
                 else -> {
                     ModelGrid(
                         models = uiState.models,
+                        recommendations = uiState.recommendations,
                         gridState = gridState,
                         isLoadingMore = uiState.isLoadingMore,
                         onModelClick = onModelClick,
@@ -286,6 +290,7 @@ private fun ModelSearchContent(
 @Composable
 private fun ModelGrid(
     models: List<Model>,
+    recommendations: List<RecommendationSection>,
     gridState: LazyGridState,
     isLoadingMore: Boolean,
     onModelClick: (Long, String?) -> Unit,
@@ -303,6 +308,17 @@ private fun ModelGrid(
         horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {
+        recommendations.forEach { section ->
+            item(
+                key = "rec_${section.title}",
+                span = { GridItemSpan(2) },
+            ) {
+                RecommendationRow(
+                    section = section,
+                    onModelClick = onModelClick,
+                )
+            }
+        }
         items(items = models, key = { it.id }) { model ->
             val thumbnailUrl = model.modelVersions
                 .firstOrNull()?.images?.firstOrNull()?.url
@@ -324,6 +340,41 @@ private fun ModelGrid(
                 ) {
                     CircularProgressIndicator()
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecommendationRow(
+    section: RecommendationSection,
+    onModelClick: (Long, String?) -> Unit,
+) {
+    Column(modifier = Modifier.padding(bottom = Spacing.sm)) {
+        Text(
+            text = section.title,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(horizontal = Spacing.xs, vertical = Spacing.xs),
+        )
+        Text(
+            text = section.reason,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = Spacing.xs, end = Spacing.xs, bottom = Spacing.sm),
+        )
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+        ) {
+            items(items = section.models, key = { it.id }) { model ->
+                val thumbnailUrl = model.modelVersions
+                    .firstOrNull()?.images?.firstOrNull()?.url
+                ModelCard(
+                    model = model,
+                    onClick = { onModelClick(model.id, thumbnailUrl) },
+                    modifier = Modifier
+                        .width(160.dp)
+                        .height(220.dp),
+                )
             }
         }
     }
