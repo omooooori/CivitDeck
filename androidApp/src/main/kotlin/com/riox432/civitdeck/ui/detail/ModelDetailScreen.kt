@@ -83,6 +83,7 @@ fun ModelDetailScreen(
     initialThumbnailUrl: String?,
     onBack: () -> Unit,
     onViewImages: (Long) -> Unit = {},
+    onCreatorClick: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -102,6 +103,7 @@ fun ModelDetailScreen(
             onRetry = viewModel::retry,
             onVersionSelected = viewModel::onVersionSelected,
             onViewImages = onViewImages,
+            onCreatorClick = onCreatorClick,
             contentPadding = padding,
         )
     }
@@ -169,6 +171,7 @@ private fun ModelDetailBody(
     onRetry: () -> Unit,
     onVersionSelected: (Int) -> Unit,
     onViewImages: (Long) -> Unit,
+    onCreatorClick: (String) -> Unit,
     contentPadding: PaddingValues,
 ) {
     val model = uiState.model
@@ -202,6 +205,7 @@ private fun ModelDetailBody(
             onRetry = onRetry,
             onVersionSelected = onVersionSelected,
             onViewImages = onViewImages,
+            onCreatorClick = onCreatorClick,
             bottomPadding = contentPadding.calculateBottomPadding(),
             modifier = Modifier.weight(1f),
         )
@@ -215,6 +219,7 @@ private fun DetailStateContent(
     onRetry: () -> Unit,
     onVersionSelected: (Int) -> Unit,
     onViewImages: (Long) -> Unit,
+    onCreatorClick: (String) -> Unit,
     bottomPadding: androidx.compose.ui.unit.Dp,
     modifier: Modifier = Modifier,
 ) {
@@ -267,6 +272,7 @@ private fun DetailStateContent(
                         selectedVersionIndex = uiState.selectedVersionIndex,
                         onVersionSelected = onVersionSelected,
                         onViewImages = onViewImages,
+                        onCreatorClick = onCreatorClick,
                         bottomPadding = bottomPadding,
                     )
                 }
@@ -328,6 +334,7 @@ private fun ModelDetailContentBody(
     selectedVersionIndex: Int,
     onVersionSelected: (Int) -> Unit,
     onViewImages: (Long) -> Unit,
+    onCreatorClick: (String) -> Unit,
     bottomPadding: androidx.compose.ui.unit.Dp,
 ) {
     val selectedVersion = model.modelVersions.getOrNull(selectedVersionIndex)
@@ -338,7 +345,7 @@ private fun ModelDetailContentBody(
     ) {
         // Model header
         item {
-            ModelHeader(model = model)
+            ModelHeader(model = model, onCreatorClick = onCreatorClick)
         }
 
         // Stats row
@@ -488,7 +495,7 @@ private fun CarouselPage(
 }
 
 @Composable
-private fun ModelHeader(model: Model) {
+private fun ModelHeader(model: Model, onCreatorClick: (String) -> Unit) {
     Column(modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.md)) {
         Text(
             text = model.name,
@@ -512,7 +519,10 @@ private fun ModelHeader(model: Model) {
                 Text(
                     text = "by ${model.creator!!.username}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable {
+                        onCreatorClick(model.creator!!.username)
+                    },
                 )
             }
         }

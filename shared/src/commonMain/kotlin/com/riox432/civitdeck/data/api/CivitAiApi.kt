@@ -25,6 +25,7 @@ class CivitAiApi(private val client: HttpClient) {
         period: String? = null,
         cursor: String? = null,
         limit: Int? = null,
+        username: String? = null,
     ): ModelListResponse {
         return client.get("$BASE_URL/models") {
             query?.let { parameter("query", it) }
@@ -34,6 +35,7 @@ class CivitAiApi(private val client: HttpClient) {
             period?.let { parameter("period", it) }
             cursor?.let { parameter("cursor", it) }
             limit?.let { parameter("limit", it) }
+            username?.let { parameter("username", it) }
         }.body()
     }
 

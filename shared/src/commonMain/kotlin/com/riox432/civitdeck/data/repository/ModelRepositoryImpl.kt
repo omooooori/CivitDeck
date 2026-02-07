@@ -29,6 +29,7 @@ class ModelRepositoryImpl(
         period: TimePeriod?,
         cursor: String?,
         limit: Int?,
+        username: String?,
     ): PaginatedResult<Model> {
         val cacheKey = buildCacheKey(
             "models",
@@ -39,6 +40,7 @@ class ModelRepositoryImpl(
             period?.toApiParam(),
             cursor,
             limit?.toString(),
+            username,
         )
         return try {
             val response = api.getModels(
@@ -49,6 +51,7 @@ class ModelRepositoryImpl(
                 period = period?.toApiParam(),
                 cursor = cursor,
                 limit = limit,
+                username = username,
             )
             localCache.putCache(cacheKey, json.encodeToString(ModelListResponse.serializer(), response))
             PaginatedResult(
