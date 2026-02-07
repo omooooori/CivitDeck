@@ -28,6 +28,8 @@ import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDe
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.riox432.civitdeck.ui.creator.CreatorProfileScreen
+import com.riox432.civitdeck.ui.creator.CreatorProfileViewModel
 import com.riox432.civitdeck.ui.detail.ModelDetailScreen
 import com.riox432.civitdeck.ui.detail.ModelDetailViewModel
 import com.riox432.civitdeck.ui.favorites.FavoritesScreen
@@ -46,6 +48,8 @@ data object FavoritesRoute
 data class DetailRoute(val modelId: Long, val thumbnailUrl: String? = null)
 
 data class ImageGalleryRoute(val modelVersionId: Long)
+
+data class CreatorRoute(val username: String)
 
 private enum class Tab { Search, Favorites }
 
@@ -169,6 +173,21 @@ private fun CivitDeckNavDisplay(backStack: MutableList<Any>) {
                     onBack = { backStack.removeLastOrNull() },
                     onViewImages = { modelVersionId ->
                         backStack.add(ImageGalleryRoute(modelVersionId))
+                    },
+                    onCreatorClick = { username ->
+                        backStack.add(CreatorRoute(username))
+                    },
+                )
+            }
+            entry<CreatorRoute> { key ->
+                val viewModel: CreatorProfileViewModel = koinViewModel(
+                    key = "creator_${key.username}",
+                ) { parametersOf(key.username) }
+                CreatorProfileScreen(
+                    viewModel = viewModel,
+                    onBack = { backStack.removeLastOrNull() },
+                    onModelClick = { modelId, thumbnailUrl ->
+                        backStack.add(DetailRoute(modelId, thumbnailUrl))
                     },
                 )
             }

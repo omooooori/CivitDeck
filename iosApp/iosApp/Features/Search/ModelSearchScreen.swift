@@ -57,6 +57,9 @@ struct ModelSearchScreen: View {
             .navigationDestination(for: Int64.self) { modelId in
                 ModelDetailScreen(modelId: modelId)
             }
+            .navigationDestination(for: String.self) { username in
+                CreatorProfileScreen(username: username)
+            }
         }
     }
 
