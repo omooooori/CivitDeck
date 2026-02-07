@@ -1,5 +1,6 @@
 package com.riox432.civitdeck.domain.usecase
 
+import com.riox432.civitdeck.domain.model.BaseModel
 import com.riox432.civitdeck.domain.model.Model
 import com.riox432.civitdeck.domain.model.ModelType
 import com.riox432.civitdeck.domain.model.PaginatedResult
@@ -14,6 +15,7 @@ class GetModelsUseCase(private val repository: ModelRepository) {
         type: ModelType? = null,
         sort: SortOrder? = null,
         period: TimePeriod? = null,
+        baseModels: List<BaseModel>? = null,
         cursor: String? = null,
         limit: Int? = null,
     ): PaginatedResult<Model> = repository.getModels(
@@ -22,6 +24,7 @@ class GetModelsUseCase(private val repository: ModelRepository) {
         type = type,
         sort = sort,
         period = period,
+        baseModels = baseModels,
         cursor = cursor,
         limit = limit,
     )

@@ -6,6 +6,7 @@ import com.riox432.civitdeck.data.api.dto.ModelResponse
 import com.riox432.civitdeck.data.api.dto.ModelVersionResponse
 import com.riox432.civitdeck.data.api.dto.toDomain
 import com.riox432.civitdeck.data.local.LocalCacheDataSource
+import com.riox432.civitdeck.domain.model.BaseModel
 import com.riox432.civitdeck.domain.model.Model
 import com.riox432.civitdeck.domain.model.ModelType
 import com.riox432.civitdeck.domain.model.ModelVersion
@@ -27,6 +28,7 @@ class ModelRepositoryImpl(
         type: ModelType?,
         sort: SortOrder?,
         period: TimePeriod?,
+        baseModels: List<BaseModel>?,
         cursor: String?,
         limit: Int?,
     ): PaginatedResult<Model> {
@@ -37,6 +39,7 @@ class ModelRepositoryImpl(
             type?.name,
             sort?.toApiParam(),
             period?.toApiParam(),
+            baseModels?.joinToString(",") { it.apiValue },
             cursor,
             limit?.toString(),
         )
@@ -47,6 +50,7 @@ class ModelRepositoryImpl(
                 type = type?.name,
                 sort = sort?.toApiParam(),
                 period = period?.toApiParam(),
+                baseModels = baseModels?.map { it.apiValue },
                 cursor = cursor,
                 limit = limit,
             )

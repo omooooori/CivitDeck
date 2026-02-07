@@ -14,6 +14,7 @@ struct ModelSearchScreen: View {
             VStack(spacing: 0) {
                 searchBar
                 typeFilterChips
+                baseModelFilterChips
 
                 ZStack {
                     if viewModel.isLoading && viewModel.models.isEmpty {
@@ -117,6 +118,23 @@ struct ModelSearchScreen: View {
         }
     }
 
+    private var baseModelFilterChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: Spacing.sm) {
+                ForEach(baseModelOptions, id: \.self) { baseModel in
+                    chipButton(
+                        label: baseModel.displayName,
+                        isSelected: viewModel.selectedBaseModels.contains(baseModel)
+                    ) {
+                        viewModel.onBaseModelToggled(baseModel)
+                    }
+                }
+            }
+            .padding(.horizontal, Spacing.lg)
+            .padding(.bottom, Spacing.sm)
+        }
+    }
+
     private func chipButton(label: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
@@ -158,6 +176,8 @@ struct ModelSearchScreen: View {
         }
     }
 }
+
+private let baseModelOptions: [BaseModel] = [.sd15, .sdxl10, .pony, .flux1D, .flux1S, .sd21, .svd]
 
 private let modelTypeOptions: [ModelType] = [
     .checkpoint, .lora, .loCon, .controlnet,

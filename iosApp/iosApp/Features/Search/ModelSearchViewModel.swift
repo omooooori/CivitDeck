@@ -6,6 +6,7 @@ final class ModelSearchViewModel: ObservableObject {
     @Published var models: [Model] = []
     @Published var query: String = ""
     @Published var selectedType: ModelType? = nil
+    @Published var selectedBaseModels: Set<BaseModel> = []
     @Published var isLoading: Bool = false
     @Published var isLoadingMore: Bool = false
     @Published var error: String? = nil
@@ -39,6 +40,19 @@ final class ModelSearchViewModel: ObservableObject {
         loadModels()
     }
 
+    func onBaseModelToggled(_ baseModel: BaseModel) {
+        loadTask?.cancel()
+        if selectedBaseModels.contains(baseModel) {
+            selectedBaseModels.remove(baseModel)
+        } else {
+            selectedBaseModels.insert(baseModel)
+        }
+        models = []
+        nextCursor = nil
+        hasMore = true
+        loadModels()
+    }
+
     func loadMore() {
         guard !isLoading, !isLoadingMore, hasMore else { return }
         loadModels(isLoadMore: true)
@@ -61,12 +75,14 @@ final class ModelSearchViewModel: ObservableObject {
             error = nil
 
             do {
+                let baseModelList: [BaseModel]? = selectedBaseModels.isEmpty ? nil : Array(selectedBaseModels)
                 let result = try await getModelsUseCase.invoke(
                     query: query.isEmpty ? nil : query,
                     tag: nil,
                     type: selectedType,
                     sort: nil,
                     period: nil,
+                    baseModels: baseModelList,
                     cursor: isLoadMore ? nextCursor : nil,
                     limit: KotlinInt(int: pageSize)
                 )

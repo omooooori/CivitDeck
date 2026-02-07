@@ -2,6 +2,7 @@ package com.riox432.civitdeck.ui.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.riox432.civitdeck.domain.model.BaseModel
 import com.riox432.civitdeck.domain.model.Model
 import com.riox432.civitdeck.domain.model.ModelType
 import com.riox432.civitdeck.domain.model.SortOrder
@@ -21,6 +22,7 @@ data class ModelSearchUiState(
     val selectedType: ModelType? = null,
     val selectedSort: SortOrder = SortOrder.MostDownloaded,
     val selectedPeriod: TimePeriod = TimePeriod.AllTime,
+    val selectedBaseModels: Set<BaseModel> = emptySet(),
     val isLoading: Boolean = false,
     val isLoadingMore: Boolean = false,
     val isRefreshing: Boolean = false,
@@ -78,6 +80,16 @@ class ModelSearchViewModel(
         loadModels()
     }
 
+    fun onBaseModelToggled(baseModel: BaseModel) {
+        loadJob?.cancel()
+        _uiState.update {
+            val updated = it.selectedBaseModels.toMutableSet()
+            if (baseModel in updated) updated.remove(baseModel) else updated.add(baseModel)
+            it.copy(selectedBaseModels = updated, nextCursor = null, models = emptyList(), hasMore = true)
+        }
+        loadModels()
+    }
+
     fun loadMore() {
         val state = _uiState.value
         if (state.isLoading || state.isLoadingMore || !state.hasMore) return
@@ -106,6 +118,7 @@ class ModelSearchViewModel(
                     type = state.selectedType,
                     sort = state.selectedSort,
                     period = state.selectedPeriod,
+                    baseModels = state.selectedBaseModels.toList().ifEmpty { null },
                     cursor = if (isLoadMore) state.nextCursor else null,
                     limit = PAGE_SIZE,
                 )

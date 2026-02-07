@@ -4,6 +4,7 @@ import com.riox432.civitdeck.domain.model.Model
 import com.riox432.civitdeck.domain.model.ModelType
 import com.riox432.civitdeck.domain.model.ModelVersion
 import com.riox432.civitdeck.domain.model.PaginatedResult
+import com.riox432.civitdeck.domain.model.BaseModel
 import com.riox432.civitdeck.domain.model.SortOrder
 import com.riox432.civitdeck.domain.model.TimePeriod
 
@@ -14,6 +15,7 @@ interface ModelRepository {
         type: ModelType? = null,
         sort: SortOrder? = null,
         period: TimePeriod? = null,
+        baseModels: List<BaseModel>? = null,
         cursor: String? = null,
         limit: Int? = null,
     ): PaginatedResult<Model>

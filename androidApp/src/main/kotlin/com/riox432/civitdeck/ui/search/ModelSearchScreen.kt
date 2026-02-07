@@ -52,6 +52,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.riox432.civitdeck.domain.model.BaseModel
 import com.riox432.civitdeck.domain.model.Model
 import com.riox432.civitdeck.domain.model.ModelType
 import com.riox432.civitdeck.ui.components.ModelCard
@@ -102,6 +103,10 @@ fun ModelSearchScreen(
             TypeFilterChips(
                 selectedType = uiState.selectedType,
                 onTypeSelected = viewModel::onTypeSelected,
+            )
+            BaseModelFilterChips(
+                selectedBaseModels = uiState.selectedBaseModels,
+                onBaseModelToggled = viewModel::onBaseModelToggled,
             )
             ModelSearchContent(
                 uiState = uiState,
@@ -177,6 +182,25 @@ private fun TypeFilterChips(
                 label = type?.name ?: "All",
                 isSelected = selectedType == type,
                 onClick = { onTypeSelected(type) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun BaseModelFilterChips(
+    selectedBaseModels: Set<BaseModel>,
+    onBaseModelToggled: (BaseModel) -> Unit,
+) {
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = Spacing.lg),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+    ) {
+        items(BaseModel.entries.toList()) { baseModel ->
+            FilterChipItem(
+                label = baseModel.displayName,
+                isSelected = baseModel in selectedBaseModels,
+                onClick = { onBaseModelToggled(baseModel) },
             )
         }
     }
