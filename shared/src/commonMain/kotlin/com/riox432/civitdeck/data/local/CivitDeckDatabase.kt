@@ -10,9 +10,11 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
 import com.riox432.civitdeck.data.local.dao.CachedApiResponseDao
 import com.riox432.civitdeck.data.local.dao.FavoriteModelDao
+import com.riox432.civitdeck.data.local.dao.SavedPromptDao
 import com.riox432.civitdeck.data.local.dao.UserPreferencesDao
 import com.riox432.civitdeck.data.local.entity.CachedApiResponseEntity
 import com.riox432.civitdeck.data.local.entity.FavoriteModelEntity
+import com.riox432.civitdeck.data.local.entity.SavedPromptEntity
 import com.riox432.civitdeck.data.local.entity.UserPreferencesEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -22,6 +24,7 @@ import kotlinx.coroutines.IO
         FavoriteModelEntity::class,
         CachedApiResponseEntity::class,
         UserPreferencesEntity::class,
+        SavedPromptEntity::class,
     ],
     version = 2,
 )
@@ -30,6 +33,7 @@ abstract class CivitDeckDatabase : RoomDatabase() {
     abstract fun favoriteModelDao(): FavoriteModelDao
     abstract fun cachedApiResponseDao(): CachedApiResponseDao
     abstract fun userPreferencesDao(): UserPreferencesDao
+    abstract fun savedPromptDao(): SavedPromptDao
 }
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")
@@ -41,6 +45,23 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
             "CREATE TABLE IF NOT EXISTS `user_preferences` " +
                 "(`id` INTEGER NOT NULL DEFAULT 1, `nsfwFilterLevel` TEXT NOT NULL DEFAULT 'Off', " +
                 "PRIMARY KEY(`id`))",
+        )
+        connection.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS saved_prompts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                prompt TEXT NOT NULL,
+                negativePrompt TEXT,
+                sampler TEXT,
+                steps INTEGER,
+                cfgScale REAL,
+                seed INTEGER,
+                modelName TEXT,
+                size TEXT,
+                sourceImageUrl TEXT,
+                savedAt INTEGER NOT NULL
+            )
+            """.trimIndent(),
         )
     }
 }

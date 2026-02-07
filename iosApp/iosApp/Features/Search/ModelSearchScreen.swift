@@ -40,6 +40,13 @@ struct ModelSearchScreen: View {
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink {
+                        SavedPromptsScreen()
+                    } label: {
+                        Image(systemName: "bookmark")
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
                     HStack(spacing: 4) {
                         Text("NSFW")
                             .font(.civitLabelSmall)

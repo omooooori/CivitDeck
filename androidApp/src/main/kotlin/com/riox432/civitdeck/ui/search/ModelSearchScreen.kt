@@ -30,6 +30,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -69,6 +70,7 @@ import com.riox432.civitdeck.ui.theme.Spacing
 fun ModelSearchScreen(
     viewModel: ModelSearchViewModel,
     onModelClick: (Long, String?) -> Unit = { _, _ -> },
+    onSavedPromptsClick: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val gridState = rememberLazyGridState()
@@ -90,6 +92,7 @@ fun ModelSearchScreen(
             SearchTopBar(
                 nsfwFilterLevel = uiState.nsfwFilterLevel,
                 onNsfwToggle = viewModel::onNsfwFilterChanged,
+                onSavedPromptsClick = onSavedPromptsClick,
             )
         },
     ) { padding ->
@@ -132,10 +135,14 @@ fun ModelSearchScreen(
 private fun SearchTopBar(
     nsfwFilterLevel: NsfwFilterLevel,
     onNsfwToggle: (NsfwFilterLevel) -> Unit,
+    onSavedPromptsClick: () -> Unit,
 ) {
     TopAppBar(
         title = { Text("CivitDeck") },
         actions = {
+            IconButton(onClick = onSavedPromptsClick) {
+                Icon(Icons.Outlined.BookmarkBorder, contentDescription = "Saved Prompts")
+            }
             NsfwToggle(
                 nsfwFilterLevel = nsfwFilterLevel,
                 onToggle = {

@@ -30,6 +30,8 @@
 		CD0007032D000007000CD001 /* FavoritesScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD0007022D000007000CD001 /* FavoritesScreen.swift */; };
 		CD0008012D000008000CD001 /* CreatorProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD0008002D000008000CD001 /* CreatorProfileViewModel.swift */; };
 		CD0008032D000008000CD001 /* CreatorProfileScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD0008022D000008000CD001 /* CreatorProfileScreen.swift */; };
+		CD0009012D000009000CD001 /* SavedPromptsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD0009002D000009000CD001 /* SavedPromptsViewModel.swift */; };
+		CD0009032D000009000CD001 /* SavedPromptsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD0009022D000009000CD001 /* SavedPromptsScreen.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -59,6 +61,8 @@
 		CD0007022D000007000CD001 /* FavoritesScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesScreen.swift; sourceTree = "<group>"; };
 		CD0008002D000008000CD001 /* CreatorProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreatorProfileViewModel.swift; sourceTree = "<group>"; };
 		CD0008022D000008000CD001 /* CreatorProfileScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreatorProfileScreen.swift; sourceTree = "<group>"; };
+		CD0009002D000009000CD001 /* SavedPromptsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedPromptsViewModel.swift; sourceTree = "<group>"; };
+		CD0009022D000009000CD001 /* SavedPromptsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedPromptsScreen.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -148,6 +152,7 @@
 				CD0008042D000008000CD001 /* Creator */,
 				CD0004042D000004000CD001 /* Detail */,
 				CD0005082D000005000CD001 /* Gallery */,
+				CD0009042D000009000CD001 /* Prompts */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -168,6 +173,15 @@
 				CD0008022D000008000CD001 /* CreatorProfileScreen.swift */,
 			);
 			path = Creator;
+			sourceTree = "<group>";
+		};
+		CD0009042D000009000CD001 /* Prompts */ = {
+			isa = PBXGroup;
+			children = (
+				CD0009002D000009000CD001 /* SavedPromptsViewModel.swift */,
+				CD0009022D000009000CD001 /* SavedPromptsScreen.swift */,
+			);
+			path = Prompts;
 			sourceTree = "<group>";
 		};
 		CD0005082D000005000CD001 /* Gallery */ = {
@@ -314,6 +328,8 @@
 				CD0007032D000007000CD001 /* FavoritesScreen.swift in Sources */,
 				CD0008012D000008000CD001 /* CreatorProfileViewModel.swift in Sources */,
 				CD0008032D000008000CD001 /* CreatorProfileScreen.swift in Sources */,
+				CD0009012D000009000CD001 /* SavedPromptsViewModel.swift in Sources */,
+				CD0009032D000009000CD001 /* SavedPromptsScreen.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

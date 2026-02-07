@@ -3,6 +3,7 @@ import Shared
 
 struct MetadataSheet: View {
     let meta: ImageGenerationMeta
+    var onSavePrompt: () -> Void = {}
 
     var body: some View {
         NavigationStack {
@@ -30,11 +31,19 @@ struct MetadataSheet: View {
                 Text(prompt)
                     .font(.callout)
 
-                Button("Copy Prompt") {
-                    UIPasteboard.general.string = prompt
+                HStack(spacing: 8) {
+                    Button("Copy Prompt") {
+                        UIPasteboard.general.string = prompt
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+
+                    Button("Save Prompt") {
+                        onSavePrompt()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
                 .padding(.top, 4)
             }
         }
