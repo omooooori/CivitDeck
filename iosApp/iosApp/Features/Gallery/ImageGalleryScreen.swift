@@ -26,7 +26,8 @@ struct ImageGalleryScreen: View {
         )) {
             ImageViewerScreen(
                 images: viewModel.images,
-                selectedIndex: $viewModel.selectedImageIndex
+                selectedIndex: $viewModel.selectedImageIndex,
+                onSavePrompt: viewModel.savePrompt
             )
         }
     }

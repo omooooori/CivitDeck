@@ -31,6 +31,7 @@ fun MetadataBottomSheet(
     meta: ImageGenerationMeta,
     sheetState: SheetState,
     onDismiss: () -> Unit,
+    onSavePrompt: () -> Unit = {},
 ) {
     val context = LocalContext.current
 
@@ -38,7 +39,7 @@ fun MetadataBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
     ) {
-        MetadataContent(meta = meta, context = context)
+        MetadataContent(meta = meta, context = context, onSavePrompt = onSavePrompt)
     }
 }
 
@@ -46,6 +47,7 @@ fun MetadataBottomSheet(
 private fun MetadataContent(
     meta: ImageGenerationMeta,
     context: Context,
+    onSavePrompt: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -60,7 +62,7 @@ private fun MetadataContent(
         )
         Spacer(modifier = Modifier.height(12.dp))
 
-        PromptSection(meta = meta, context = context)
+        PromptSection(meta = meta, context = context, onSavePrompt = onSavePrompt)
         MetadataParams(meta = meta)
     }
 }
@@ -69,6 +71,7 @@ private fun MetadataContent(
 private fun PromptSection(
     meta: ImageGenerationMeta,
     context: Context,
+    onSavePrompt: () -> Unit,
 ) {
     meta.prompt?.let { prompt ->
         MetadataLabel("Prompt")
@@ -77,10 +80,15 @@ private fun PromptSection(
             style = MaterialTheme.typography.bodySmall,
         )
         Spacer(modifier = Modifier.height(8.dp))
-        OutlinedButton(
-            onClick = { copyToClipboard(context, "Prompt", prompt) },
-        ) {
-            Text("Copy Prompt")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(
+                onClick = { copyToClipboard(context, "Prompt", prompt) },
+            ) {
+                Text("Copy Prompt")
+            }
+            OutlinedButton(onClick = onSavePrompt) {
+                Text("Save Prompt")
+            }
         }
         Spacer(modifier = Modifier.height(8.dp))
     }

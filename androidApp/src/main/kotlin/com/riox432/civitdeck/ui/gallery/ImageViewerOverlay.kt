@@ -42,6 +42,7 @@ import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.riox432.civitdeck.domain.model.Image
+import com.riox432.civitdeck.domain.model.ImageGenerationMeta
 import com.riox432.civitdeck.ui.theme.Duration
 import com.riox432.civitdeck.ui.theme.Spring
 import kotlinx.coroutines.launch
@@ -52,6 +53,7 @@ fun ImageViewerOverlay(
     images: List<Image>,
     initialIndex: Int,
     onDismiss: () -> Unit,
+    onSavePrompt: (ImageGenerationMeta, String?) -> Unit = { _, _ -> },
 ) {
     BackHandler(onBack = onDismiss)
 
@@ -95,6 +97,7 @@ fun ImageViewerOverlay(
                 meta = meta,
                 sheetState = sheetState,
                 onDismiss = { showMetadata = false },
+                onSavePrompt = { onSavePrompt(meta, currentImage.url) },
             )
         }
     }

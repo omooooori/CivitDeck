@@ -37,6 +37,15 @@ struct ModelSearchScreen: View {
             .navigationTitle("CivitDeck")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.visible, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink {
+                        SavedPromptsScreen()
+                    } label: {
+                        Image(systemName: "bookmark")
+                    }
+                }
+            }
             .navigationDestination(for: Int64.self) { modelId in
                 ModelDetailScreen(modelId: modelId)
             }

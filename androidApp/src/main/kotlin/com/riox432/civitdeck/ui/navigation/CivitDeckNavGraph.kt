@@ -14,6 +14,8 @@ import com.riox432.civitdeck.ui.detail.ModelDetailScreen
 import com.riox432.civitdeck.ui.detail.ModelDetailViewModel
 import com.riox432.civitdeck.ui.gallery.ImageGalleryScreen
 import com.riox432.civitdeck.ui.gallery.ImageGalleryViewModel
+import com.riox432.civitdeck.ui.prompts.SavedPromptsScreen
+import com.riox432.civitdeck.ui.prompts.SavedPromptsViewModel
 import com.riox432.civitdeck.ui.search.ModelSearchScreen
 import com.riox432.civitdeck.ui.search.ModelSearchViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -24,6 +26,8 @@ data object SearchRoute
 data class DetailRoute(val modelId: Long, val thumbnailUrl: String? = null)
 
 data class ImageGalleryRoute(val modelVersionId: Long)
+
+data object SavedPromptsRoute
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -54,6 +58,7 @@ private fun CivitDeckNavDisplay(backStack: MutableList<Any>) {
                     onModelClick = { modelId, thumbnailUrl ->
                         backStack.add(DetailRoute(modelId, thumbnailUrl))
                     },
+                    onSavedPromptsClick = { backStack.add(SavedPromptsRoute) },
                 )
             }
             entry<DetailRoute> { key ->
@@ -75,6 +80,13 @@ private fun CivitDeckNavDisplay(backStack: MutableList<Any>) {
                     key = "gallery_${key.modelVersionId}",
                 ) { parametersOf(key.modelVersionId) }
                 ImageGalleryScreen(
+                    viewModel = viewModel,
+                    onBack = { backStack.removeLastOrNull() },
+                )
+            }
+            entry<SavedPromptsRoute> {
+                val viewModel: SavedPromptsViewModel = koinViewModel()
+                SavedPromptsScreen(
                     viewModel = viewModel,
                     onBack = { backStack.removeLastOrNull() },
                 )

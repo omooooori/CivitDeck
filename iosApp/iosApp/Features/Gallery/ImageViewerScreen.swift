@@ -4,6 +4,7 @@ import Shared
 struct ImageViewerScreen: View {
     let images: [CivitImage]
     @Binding var selectedIndex: Int?
+    var onSavePrompt: (ImageGenerationMeta, String) -> Void = { _, _ in }
 
     @State private var showMetadata = false
     @State private var controlsVisible = true
@@ -35,8 +36,10 @@ struct ImageViewerScreen: View {
             }
             .sheet(isPresented: $showMetadata) {
                 if let meta = images[safe: index]?.meta {
-                    MetadataSheet(meta: meta)
-                        .presentationDetents([.medium, .large])
+                    MetadataSheet(meta: meta) {
+                        onSavePrompt(meta, images[safe: index]?.url ?? "")
+                    }
+                    .presentationDetents([.medium, .large])
                 }
             }
         }

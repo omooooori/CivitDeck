@@ -3,10 +3,12 @@ package com.riox432.civitdeck.ui.gallery
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.riox432.civitdeck.domain.model.Image
+import com.riox432.civitdeck.domain.model.ImageGenerationMeta
 import com.riox432.civitdeck.domain.model.NsfwLevel
 import com.riox432.civitdeck.domain.model.SortOrder
 import com.riox432.civitdeck.domain.model.TimePeriod
 import com.riox432.civitdeck.domain.usecase.GetImagesUseCase
+import com.riox432.civitdeck.domain.usecase.SavePromptUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +33,7 @@ data class ImageGalleryUiState(
 class ImageGalleryViewModel(
     private val modelVersionId: Long,
     private val getImagesUseCase: GetImagesUseCase,
+    private val savePromptUseCase: SavePromptUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ImageGalleryUiState())
@@ -97,6 +100,12 @@ class ImageGalleryViewModel(
 
     fun retry() {
         loadImages()
+    }
+
+    fun savePrompt(meta: ImageGenerationMeta, sourceImageUrl: String?) {
+        viewModelScope.launch {
+            savePromptUseCase(meta, sourceImageUrl)
+        }
     }
 
     private fun loadImages(isLoadMore: Boolean = false) {
