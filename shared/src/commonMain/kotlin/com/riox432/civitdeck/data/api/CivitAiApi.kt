@@ -23,6 +23,7 @@ class CivitAiApi(private val client: HttpClient) {
         type: String? = null,
         sort: String? = null,
         period: String? = null,
+        baseModels: List<String>? = null,
         cursor: String? = null,
         limit: Int? = null,
     ): ModelListResponse {
@@ -32,6 +33,7 @@ class CivitAiApi(private val client: HttpClient) {
             type?.let { parameter("types", it) }
             sort?.let { parameter("sort", it) }
             period?.let { parameter("period", it) }
+            baseModels?.forEach { parameter("baseModels", it) }
             cursor?.let { parameter("cursor", it) }
             limit?.let { parameter("limit", it) }
         }.body()
