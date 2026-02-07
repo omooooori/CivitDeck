@@ -59,6 +59,8 @@ import com.riox432.civitdeck.domain.model.BaseModel
 import com.riox432.civitdeck.domain.model.Model
 import com.riox432.civitdeck.domain.model.ModelType
 import com.riox432.civitdeck.domain.model.NsfwFilterLevel
+import com.riox432.civitdeck.domain.model.SortOrder
+import com.riox432.civitdeck.domain.model.TimePeriod
 import com.riox432.civitdeck.ui.components.ModelCard
 import com.riox432.civitdeck.ui.theme.CornerRadius
 import com.riox432.civitdeck.ui.theme.Duration
@@ -111,13 +113,12 @@ fun ModelSearchScreen(
                 onQueryChange = viewModel::onQueryChange,
                 onSearch = viewModel::onSearch,
             )
-            TypeFilterChips(
-                selectedType = uiState.selectedType,
+            SearchFilters(
+                uiState = uiState,
                 onTypeSelected = viewModel::onTypeSelected,
-            )
-            BaseModelFilterChips(
-                selectedBaseModels = uiState.selectedBaseModels,
                 onBaseModelToggled = viewModel::onBaseModelToggled,
+                onSortSelected = viewModel::onSortSelected,
+                onPeriodSelected = viewModel::onPeriodSelected,
             )
             ModelSearchContent(
                 uiState = uiState,
@@ -155,6 +156,24 @@ private fun SearchTopBar(
                 },
             )
         },
+    )
+}
+
+@Composable
+private fun SearchFilters(
+    uiState: ModelSearchUiState,
+    onTypeSelected: (ModelType?) -> Unit,
+    onBaseModelToggled: (BaseModel) -> Unit,
+    onSortSelected: (SortOrder) -> Unit,
+    onPeriodSelected: (TimePeriod) -> Unit,
+) {
+    TypeFilterChips(selectedType = uiState.selectedType, onTypeSelected = onTypeSelected)
+    BaseModelFilterChips(selectedBaseModels = uiState.selectedBaseModels, onBaseModelToggled = onBaseModelToggled)
+    SortAndPeriodFilters(
+        selectedSort = uiState.selectedSort,
+        selectedPeriod = uiState.selectedPeriod,
+        onSortSelected = onSortSelected,
+        onPeriodSelected = onPeriodSelected,
     )
 }
 
@@ -258,6 +277,34 @@ private fun BaseModelFilterChips(
                 label = baseModel.displayName,
                 isSelected = baseModel in selectedBaseModels,
                 onClick = { onBaseModelToggled(baseModel) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SortAndPeriodFilters(
+    selectedSort: SortOrder,
+    selectedPeriod: TimePeriod,
+    onSortSelected: (SortOrder) -> Unit,
+    onPeriodSelected: (TimePeriod) -> Unit,
+) {
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = Spacing.lg),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+    ) {
+        items(SortOrder.entries.toList()) { sort ->
+            FilterChipItem(
+                label = sort.name,
+                isSelected = selectedSort == sort,
+                onClick = { onSortSelected(sort) },
+            )
+        }
+        items(TimePeriod.entries.toList()) { period ->
+            FilterChipItem(
+                label = period.name,
+                isSelected = selectedPeriod == period,
+                onClick = { onPeriodSelected(period) },
             )
         }
     }
