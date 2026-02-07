@@ -3,6 +3,8 @@ import Shared
 
 struct ModelSearchScreen: View {
     @StateObject private var viewModel = ModelSearchViewModel()
+    @FocusState private var isSearchFocused: Bool
+    @State private var showHistory: Bool = false
 
     private let columns = [
         GridItem(.flexible(), spacing: Spacing.sm),
@@ -13,6 +15,7 @@ struct ModelSearchScreen: View {
         NavigationStack {
             VStack(spacing: 0) {
                 searchBar
+                searchHistoryDropdown
                 typeFilterChips
 
                 ZStack {
@@ -40,6 +43,7 @@ struct ModelSearchScreen: View {
             .navigationDestination(for: Int64.self) { modelId in
                 ModelDetailScreen(modelId: modelId)
             }
+            .task { await viewModel.observeSearchHistory() }
         }
     }
 
@@ -48,13 +52,26 @@ struct ModelSearchScreen: View {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(.civitOnSurfaceVariant)
             TextField("Search models...", text: $viewModel.query)
+                .focused($isSearchFocused)
                 .submitLabel(.search)
                 .onSubmit {
                     viewModel.onSearch()
+                    showHistory = false
+                }
+                .onChange(of: viewModel.query) { newValue in
+                    showHistory = newValue.isEmpty
+                        && isSearchFocused
+                        && !viewModel.searchHistory.isEmpty
+                }
+                .onChange(of: isSearchFocused) { focused in
+                    showHistory = focused
+                        && viewModel.query.isEmpty
+                        && !viewModel.searchHistory.isEmpty
                 }
             if !viewModel.query.isEmpty {
                 Button {
                     viewModel.query = ""
+                    showHistory = isSearchFocused && !viewModel.searchHistory.isEmpty
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(.civitOnSurfaceVariant)
@@ -68,6 +85,48 @@ struct ModelSearchScreen: View {
         )
         .padding(.horizontal, Spacing.lg)
         .padding(.vertical, Spacing.sm)
+    }
+
+    @ViewBuilder
+    private var searchHistoryDropdown: some View {
+        if showHistory && !viewModel.searchHistory.isEmpty {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(viewModel.searchHistory, id: \.self) { item in
+                    Button {
+                        viewModel.onHistoryItemClick(item)
+                        showHistory = false
+                        isSearchFocused = false
+                    } label: {
+                        HStack(spacing: Spacing.sm) {
+                            Image(systemName: "clock.arrow.circlepath")
+                                .foregroundColor(.civitOnSurfaceVariant)
+                                .font(.civitBodySmall)
+                            Text(item)
+                                .font(.civitBodyMedium)
+                                .foregroundColor(.civitOnSurface)
+                            Spacer()
+                        }
+                        .padding(.horizontal, Spacing.lg)
+                        .padding(.vertical, Spacing.sm)
+                    }
+                }
+                Button {
+                    viewModel.clearSearchHistory()
+                    showHistory = false
+                } label: {
+                    Text("Clear history")
+                        .font(.civitLabelMedium)
+                        .foregroundColor(.civitPrimary)
+                        .padding(.horizontal, Spacing.lg)
+                        .padding(.vertical, Spacing.sm)
+                }
+            }
+            .background(Color.civitSurfaceContainerHigh)
+            .cornerRadius(CornerRadius.card)
+            .padding(.horizontal, Spacing.lg)
+            .transition(.opacity.combined(with: .move(edge: .top)))
+            .animation(MotionAnimation.standard, value: showHistory)
+        }
     }
 
     private var modelGrid: some View {
