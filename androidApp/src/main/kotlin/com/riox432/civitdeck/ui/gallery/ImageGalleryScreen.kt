@@ -48,8 +48,8 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.riox432.civitdeck.domain.model.Image
 import com.riox432.civitdeck.domain.model.SortOrder
-import com.riox432.civitdeck.domain.model.toViewable
 import com.riox432.civitdeck.domain.model.TimePeriod
+import com.riox432.civitdeck.domain.model.toViewable
 import com.riox432.civitdeck.ui.theme.CornerRadius
 import com.riox432.civitdeck.ui.theme.Duration
 import com.riox432.civitdeck.ui.theme.Easing
