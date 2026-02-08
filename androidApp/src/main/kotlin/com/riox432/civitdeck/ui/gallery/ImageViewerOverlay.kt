@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import com.riox432.civitdeck.domain.model.Image
 import com.riox432.civitdeck.domain.model.ImageGenerationMeta
 import com.riox432.civitdeck.ui.theme.Duration
 import com.riox432.civitdeck.ui.theme.Spring
