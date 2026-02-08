@@ -1,5 +1,6 @@
 package com.riox432.civitdeck.di
 
+import com.riox432.civitdeck.domain.usecase.DeleteSavedPromptUseCase
 import com.riox432.civitdeck.domain.usecase.GetCreatorModelsUseCase
 import com.riox432.civitdeck.domain.usecase.GetImagesUseCase
 import com.riox432.civitdeck.domain.usecase.GetModelDetailUseCase
@@ -7,10 +8,13 @@ import com.riox432.civitdeck.domain.usecase.GetModelsUseCase
 import com.riox432.civitdeck.domain.usecase.ObserveFavoritesUseCase
 import com.riox432.civitdeck.domain.usecase.ObserveIsFavoriteUseCase
 import com.riox432.civitdeck.domain.usecase.ObserveNsfwFilterUseCase
+import com.riox432.civitdeck.domain.usecase.ObserveSavedPromptsUseCase
+import com.riox432.civitdeck.domain.usecase.SavePromptUseCase
 import com.riox432.civitdeck.domain.usecase.SetNsfwFilterUseCase
 import com.riox432.civitdeck.domain.usecase.ToggleFavoriteUseCase
 import org.koin.mp.KoinPlatform.getKoin
 
+@Suppress("TooManyFunctions")
 object KoinHelper {
     fun getModelsUseCase(): GetModelsUseCase = getKoin().get()
     fun getCreatorModelsUseCase(): GetCreatorModelsUseCase = getKoin().get()
@@ -21,4 +25,7 @@ object KoinHelper {
     fun getObserveIsFavoriteUseCase(): ObserveIsFavoriteUseCase = getKoin().get()
     fun getObserveNsfwFilterUseCase(): ObserveNsfwFilterUseCase = getKoin().get()
     fun getSetNsfwFilterUseCase(): SetNsfwFilterUseCase = getKoin().get()
+    fun getSavePromptUseCase(): SavePromptUseCase = getKoin().get()
+    fun getObserveSavedPromptsUseCase(): ObserveSavedPromptsUseCase = getKoin().get()
+    fun getDeleteSavedPromptUseCase(): DeleteSavedPromptUseCase = getKoin().get()
 }
