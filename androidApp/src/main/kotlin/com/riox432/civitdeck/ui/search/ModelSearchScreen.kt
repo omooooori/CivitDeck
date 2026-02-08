@@ -46,10 +46,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
@@ -75,6 +78,7 @@ fun ModelSearchScreen(
     onSavedPromptsClick: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val searchHistory by viewModel.searchHistory.collectAsStateWithLifecycle()
     val gridState = rememberLazyGridState()
 
     val shouldLoadMore by remember {
@@ -108,10 +112,13 @@ fun ModelSearchScreen(
                     end = padding.calculateRightPadding(layoutDirection),
                 ),
         ) {
-            SearchBar(
+            SearchBarWithHistory(
                 query = uiState.query,
                 onQueryChange = viewModel::onQueryChange,
                 onSearch = viewModel::onSearch,
+                searchHistory = searchHistory,
+                onHistoryItemClick = viewModel::onHistoryItemClick,
+                onClearHistory = viewModel::clearSearchHistory,
             )
             SearchFilters(
                 uiState = uiState,
@@ -196,35 +203,114 @@ private fun NsfwToggle(
 }
 
 @Composable
-private fun SearchBar(
+private fun SearchBarWithHistory(
     query: String,
     onQueryChange: (String) -> Unit,
     onSearch: () -> Unit,
+    searchHistory: List<String>,
+    onHistoryItemClick: (String) -> Unit,
+    onClearHistory: () -> Unit,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
+    var showHistory by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm)) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = {
+                onQueryChange(it)
+                showHistory = it.isEmpty() && searchHistory.isNotEmpty()
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { focusState ->
+                    showHistory = focusState.isFocused &&
+                        query.isEmpty() && searchHistory.isNotEmpty()
+                },
+            placeholder = { Text("Search models...") },
+            trailingIcon = {
+                if (query.isNotEmpty()) {
+                    IconButton(onClick = {
+                        onQueryChange("")
+                        showHistory = searchHistory.isNotEmpty()
+                    }) {
+                        Icon(Icons.Default.Clear, contentDescription = "Clear")
+                    }
+                }
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    onSearch()
+                    keyboardController?.hide()
+                    showHistory = false
+                },
+            ),
+        )
+
+        AnimatedVisibility(visible = showHistory) {
+            SearchHistoryDropdown(
+                history = searchHistory,
+                onItemClick = { item ->
+                    onHistoryItemClick(item)
+                    showHistory = false
+                    keyboardController?.hide()
+                },
+                onClearAll = {
+                    onClearHistory()
+                    showHistory = false
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SearchHistoryDropdown(
+    history: List<String>,
+    onItemClick: (String) -> Unit,
+    onClearAll: () -> Unit,
+) {
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
-        placeholder = { Text("Search models...") },
-        trailingIcon = {
-            if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Clear, contentDescription = "Clear")
-                }
+            .background(
+                MaterialTheme.colorScheme.surfaceContainerHigh,
+                RoundedCornerShape(bottomStart = CornerRadius.card, bottomEnd = CornerRadius.card),
+            )
+            .padding(vertical = Spacing.xs),
+    ) {
+        history.forEach { item ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onItemClick(item) }
+                    .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Default.Clear,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = Spacing.sm),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = item,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f),
+                )
             }
-        },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(
-            onSearch = {
-                onSearch()
-                keyboardController?.hide()
-            },
-        ),
-    )
+        }
+        Text(
+            text = "Clear history",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .clickable(onClick = onClearAll)
+                .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
+        )
+    }
 }
 
 private val filterTypes = listOf(null) + listOf(

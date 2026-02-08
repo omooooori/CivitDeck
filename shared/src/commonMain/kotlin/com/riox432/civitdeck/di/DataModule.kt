@@ -10,6 +10,7 @@ import com.riox432.civitdeck.data.repository.FavoriteRepositoryImpl
 import com.riox432.civitdeck.data.repository.ImageRepositoryImpl
 import com.riox432.civitdeck.data.repository.ModelRepositoryImpl
 import com.riox432.civitdeck.data.repository.SavedPromptRepositoryImpl
+import com.riox432.civitdeck.data.repository.SearchHistoryRepositoryImpl
 import com.riox432.civitdeck.data.repository.TagRepositoryImpl
 import com.riox432.civitdeck.data.repository.UserPreferencesRepositoryImpl
 import com.riox432.civitdeck.domain.repository.CreatorRepository
@@ -17,6 +18,7 @@ import com.riox432.civitdeck.domain.repository.FavoriteRepository
 import com.riox432.civitdeck.domain.repository.ImageRepository
 import com.riox432.civitdeck.domain.repository.ModelRepository
 import com.riox432.civitdeck.domain.repository.SavedPromptRepository
+import com.riox432.civitdeck.domain.repository.SearchHistoryRepository
 import com.riox432.civitdeck.domain.repository.TagRepository
 import com.riox432.civitdeck.domain.repository.UserPreferencesRepository
 import kotlinx.serialization.json.Json
@@ -39,6 +41,7 @@ val dataModule = module {
     single { get<CivitDeckDatabase>().cachedApiResponseDao() }
     single { get<CivitDeckDatabase>().userPreferencesDao() }
     single { get<CivitDeckDatabase>().savedPromptDao() }
+    single { get<CivitDeckDatabase>().searchHistoryDao() }
 
     // Data Sources
     single { LocalCacheDataSource(get()) }
@@ -51,4 +54,5 @@ val dataModule = module {
     single<FavoriteRepository> { FavoriteRepositoryImpl(get()) }
     single<UserPreferencesRepository> { UserPreferencesRepositoryImpl(get()) }
     single<SavedPromptRepository> { SavedPromptRepositoryImpl(get()) }
+    single<SearchHistoryRepository> { SearchHistoryRepositoryImpl(get()) }
 }

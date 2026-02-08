@@ -8,14 +8,19 @@ import com.riox432.civitdeck.domain.model.ModelType
 import com.riox432.civitdeck.domain.model.NsfwFilterLevel
 import com.riox432.civitdeck.domain.model.SortOrder
 import com.riox432.civitdeck.domain.model.TimePeriod
+import com.riox432.civitdeck.domain.usecase.AddSearchHistoryUseCase
+import com.riox432.civitdeck.domain.usecase.ClearSearchHistoryUseCase
 import com.riox432.civitdeck.domain.usecase.GetModelsUseCase
 import com.riox432.civitdeck.domain.usecase.ObserveNsfwFilterUseCase
+import com.riox432.civitdeck.domain.usecase.ObserveSearchHistoryUseCase
 import com.riox432.civitdeck.domain.usecase.SetNsfwFilterUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -39,10 +44,17 @@ class ModelSearchViewModel(
     private val getModelsUseCase: GetModelsUseCase,
     private val observeNsfwFilterUseCase: ObserveNsfwFilterUseCase,
     private val setNsfwFilterUseCase: SetNsfwFilterUseCase,
+    observeSearchHistoryUseCase: ObserveSearchHistoryUseCase,
+    private val addSearchHistoryUseCase: AddSearchHistoryUseCase,
+    private val clearSearchHistoryUseCase: ClearSearchHistoryUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ModelSearchUiState())
     val uiState: StateFlow<ModelSearchUiState> = _uiState.asStateFlow()
+
+    val searchHistory: StateFlow<List<String>> =
+        observeSearchHistoryUseCase()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private var loadJob: Job? = null
 
@@ -75,11 +87,24 @@ class ModelSearchViewModel(
     }
 
     fun onSearch() {
+        val query = _uiState.value.query
+        if (query.isNotBlank()) {
+            viewModelScope.launch { addSearchHistoryUseCase(query.trim()) }
+        }
         loadJob?.cancel()
         _uiState.update {
             it.copy(nextCursor = null, models = emptyList(), hasMore = true)
         }
         loadModels()
+    }
+
+    fun onHistoryItemClick(query: String) {
+        _uiState.update { it.copy(query = query) }
+        onSearch()
+    }
+
+    fun clearSearchHistory() {
+        viewModelScope.launch { clearSearchHistoryUseCase() }
     }
 
     fun onTypeSelected(type: ModelType?) {

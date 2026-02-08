@@ -14,10 +14,14 @@ final class ModelSearchViewModel: ObservableObject {
     @Published var isLoadingMore: Bool = false
     @Published var error: String? = nil
     @Published var hasMore: Bool = true
+    @Published var searchHistory: [String] = []
 
     private let getModelsUseCase: GetModelsUseCase
     private let observeNsfwFilterUseCase: ObserveNsfwFilterUseCase
     private let setNsfwFilterUseCase: SetNsfwFilterUseCase
+    private let observeSearchHistoryUseCase: ObserveSearchHistoryUseCase
+    private let addSearchHistoryUseCase: AddSearchHistoryUseCase
+    private let clearSearchHistoryUseCase: ClearSearchHistoryUseCase
     private var nextCursor: String? = nil
     private var loadTask: Task<Void, Never>? = nil
 
@@ -27,6 +31,9 @@ final class ModelSearchViewModel: ObservableObject {
         self.getModelsUseCase = KoinHelper.shared.getModelsUseCase()
         self.observeNsfwFilterUseCase = KoinHelper.shared.getObserveNsfwFilterUseCase()
         self.setNsfwFilterUseCase = KoinHelper.shared.getSetNsfwFilterUseCase()
+        self.observeSearchHistoryUseCase = KoinHelper.shared.getObserveSearchHistoryUseCase()
+        self.addSearchHistoryUseCase = KoinHelper.shared.getAddSearchHistoryUseCase()
+        self.clearSearchHistoryUseCase = KoinHelper.shared.getClearSearchHistoryUseCase()
         loadModels()
     }
 
@@ -50,12 +57,31 @@ final class ModelSearchViewModel: ObservableObject {
         loadModels()
     }
 
+    func observeSearchHistory() async {
+        for await value in observeSearchHistoryUseCase.invoke() {
+            searchHistory = value
+        }
+    }
+
     func onSearch() {
+        let trimmed = query.trimmingCharacters(in: .whitespaces)
+        if !trimmed.isEmpty {
+            Task { try? await addSearchHistoryUseCase.invoke(query: trimmed) }
+        }
         loadTask?.cancel()
         models = []
         nextCursor = nil
         hasMore = true
         loadModels()
+    }
+
+    func onHistoryItemClick(_ item: String) {
+        query = item
+        onSearch()
+    }
+
+    func clearSearchHistory() {
+        Task { try? await clearSearchHistoryUseCase.invoke() }
     }
 
     func onTypeSelected(_ type: ModelType?) {
