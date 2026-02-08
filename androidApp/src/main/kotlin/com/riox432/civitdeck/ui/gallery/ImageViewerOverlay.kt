@@ -1,5 +1,6 @@
 package com.riox432.civitdeck.ui.gallery
 
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
@@ -10,13 +11,17 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -57,6 +62,7 @@ fun ImageViewerOverlay(
 ) {
     BackHandler(onBack = onDismiss)
 
+    val context = LocalContext.current
     val pagerState = rememberPagerState(initialPage = initialIndex) { images.size }
     var showMetadata by remember { mutableStateOf(false) }
     var controlsVisible by remember { mutableStateOf(true) }
@@ -82,10 +88,16 @@ fun ImageViewerOverlay(
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
+            val currentImage = images.getOrNull(pagerState.currentPage)
             ViewerControls(
                 onDismiss = onDismiss,
                 onInfoClick = { showMetadata = true },
-                hasMetadata = images.getOrNull(pagerState.currentPage)?.meta != null,
+                onShareClick = {
+                    currentImage?.let { image ->
+                        shareImage(context, image.url, image.meta)
+                    }
+                },
+                hasMetadata = currentImage?.meta != null,
             )
         }
     }
@@ -120,6 +132,7 @@ private fun ImagePager(
 private fun ViewerControls(
     onDismiss: () -> Unit,
     onInfoClick: () -> Unit,
+    onShareClick: () -> Unit,
     hasMetadata: Boolean,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -135,18 +148,31 @@ private fun ViewerControls(
             Icon(Icons.Default.Close, contentDescription = "Close")
         }
 
-        if (hasMetadata) {
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
+        ) {
             IconButton(
-                onClick = onInfoClick,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp),
+                onClick = onShareClick,
                 colors = IconButtonDefaults.iconButtonColors(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
                     contentColor = MaterialTheme.colorScheme.onSurface,
                 ),
             ) {
-                Icon(Icons.Default.Info, contentDescription = "Metadata")
+                Icon(Icons.Default.Share, contentDescription = "Share")
+            }
+            if (hasMetadata) {
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(
+                    onClick = onInfoClick,
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
+                ) {
+                    Icon(Icons.Default.Info, contentDescription = "Metadata")
+                }
             }
         }
     }
@@ -213,6 +239,41 @@ private fun ZoomableImage(imageUrl: String) {
             }
         },
     )
+}
+
+private fun shareImage(
+    context: android.content.Context,
+    imageUrl: String,
+    meta: ImageGenerationMeta?,
+) {
+    val text = formatShareText(imageUrl, meta)
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, text)
+    }
+    context.startActivity(Intent.createChooser(intent, "Share image"))
+}
+
+private fun formatShareText(imageUrl: String, meta: ImageGenerationMeta?): String {
+    return buildString {
+        appendLine(imageUrl)
+        if (meta != null) {
+            appendLine()
+            meta.prompt?.let { appendLine("Prompt: $it") }
+            meta.negativePrompt?.let { appendLine("Negative: $it") }
+            val params = listOfNotNull(
+                meta.model?.let { "Model: $it" },
+                meta.steps?.let { "Steps: $it" },
+                meta.cfgScale?.let { "CFG: $it" },
+                meta.sampler?.let { "Sampler: $it" },
+            )
+            if (params.isNotEmpty()) {
+                appendLine(params.joinToString(" | "))
+            }
+        }
+        appendLine()
+        append("Shared via CivitDeck")
+    }
 }
 
 private const val MIN_ZOOM = 0.5f
