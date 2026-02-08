@@ -1,5 +1,6 @@
 package com.riox432.civitdeck.di
 
+import com.riox432.civitdeck.domain.usecase.GetCreatorModelsUseCase
 import com.riox432.civitdeck.domain.usecase.GetImagesUseCase
 import com.riox432.civitdeck.domain.usecase.GetModelDetailUseCase
 import com.riox432.civitdeck.domain.usecase.GetModelsUseCase
@@ -12,6 +13,7 @@ import org.koin.dsl.module
 
 val domainModule = module {
     factory { GetModelsUseCase(get()) }
+    factory { GetCreatorModelsUseCase(get()) }
     factory { GetModelDetailUseCase(get()) }
     factory { GetImagesUseCase(get()) }
     factory { ToggleFavoriteUseCase(get()) }

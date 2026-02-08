@@ -25,9 +25,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.riox432.civitdeck.ui.creator.CreatorProfileScreen
+import com.riox432.civitdeck.ui.creator.CreatorProfileViewModel
 import com.riox432.civitdeck.ui.detail.ModelDetailScreen
 import com.riox432.civitdeck.ui.detail.ModelDetailViewModel
 import com.riox432.civitdeck.ui.favorites.FavoritesScreen
@@ -46,6 +49,8 @@ data object FavoritesRoute
 data class DetailRoute(val modelId: Long, val thumbnailUrl: String? = null)
 
 data class ImageGalleryRoute(val modelVersionId: Long)
+
+data class CreatorRoute(val username: String)
 
 private enum class Tab { Search, Favorites }
 
@@ -158,29 +163,56 @@ private fun CivitDeckNavDisplay(backStack: MutableList<Any>) {
                     },
                 )
             }
-            entry<DetailRoute> { key ->
-                val viewModel: ModelDetailViewModel = koinViewModel(
-                    key = key.modelId.toString(),
-                ) { parametersOf(key.modelId) }
-                ModelDetailScreen(
-                    viewModel = viewModel,
-                    modelId = key.modelId,
-                    initialThumbnailUrl = key.thumbnailUrl,
-                    onBack = { backStack.removeLastOrNull() },
-                    onViewImages = { modelVersionId ->
-                        backStack.add(ImageGalleryRoute(modelVersionId))
-                    },
-                )
-            }
-            entry<ImageGalleryRoute> { key ->
-                val viewModel: ImageGalleryViewModel = koinViewModel(
-                    key = "gallery_${key.modelVersionId}",
-                ) { parametersOf(key.modelVersionId) }
-                ImageGalleryScreen(
-                    viewModel = viewModel,
-                    onBack = { backStack.removeLastOrNull() },
-                )
-            }
+            detailEntry(backStack)
+            creatorEntry(backStack)
+            galleryEntry(backStack)
         },
     )
+}
+
+private fun EntryProviderScope<Any>.detailEntry(backStack: MutableList<Any>) {
+    entry<DetailRoute> { key ->
+        val viewModel: ModelDetailViewModel = koinViewModel(
+            key = key.modelId.toString(),
+        ) { parametersOf(key.modelId) }
+        ModelDetailScreen(
+            viewModel = viewModel,
+            modelId = key.modelId,
+            initialThumbnailUrl = key.thumbnailUrl,
+            onBack = { backStack.removeLastOrNull() },
+            onViewImages = { modelVersionId ->
+                backStack.add(ImageGalleryRoute(modelVersionId))
+            },
+            onCreatorClick = { username ->
+                backStack.add(CreatorRoute(username))
+            },
+        )
+    }
+}
+
+private fun EntryProviderScope<Any>.creatorEntry(backStack: MutableList<Any>) {
+    entry<CreatorRoute> { key ->
+        val viewModel: CreatorProfileViewModel = koinViewModel(
+            key = "creator_${key.username}",
+        ) { parametersOf(key.username) }
+        CreatorProfileScreen(
+            viewModel = viewModel,
+            onBack = { backStack.removeLastOrNull() },
+            onModelClick = { modelId, thumbnailUrl ->
+                backStack.add(DetailRoute(modelId, thumbnailUrl))
+            },
+        )
+    }
+}
+
+private fun EntryProviderScope<Any>.galleryEntry(backStack: MutableList<Any>) {
+    entry<ImageGalleryRoute> { key ->
+        val viewModel: ImageGalleryViewModel = koinViewModel(
+            key = "gallery_${key.modelVersionId}",
+        ) { parametersOf(key.modelVersionId) }
+        ImageGalleryScreen(
+            viewModel = viewModel,
+            onBack = { backStack.removeLastOrNull() },
+        )
+    }
 }
