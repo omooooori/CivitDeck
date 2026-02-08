@@ -8,6 +8,8 @@ final class ModelSearchViewModel: ObservableObject {
     @Published var selectedType: ModelType? = nil
     @Published var selectedBaseModels: Set<BaseModel> = []
     @Published var nsfwFilterLevel: NsfwFilterLevel = .off
+    @Published var selectedSort: CivitSortOrder = .mostDownloaded
+    @Published var selectedPeriod: TimePeriod = .allTime
     @Published var isLoading: Bool = false
     @Published var isLoadingMore: Bool = false
     @Published var error: String? = nil
@@ -78,6 +80,24 @@ final class ModelSearchViewModel: ObservableObject {
         loadModels()
     }
 
+    func onSortSelected(_ sort: CivitSortOrder) {
+        loadTask?.cancel()
+        selectedSort = sort
+        models = []
+        nextCursor = nil
+        hasMore = true
+        loadModels()
+    }
+
+    func onPeriodSelected(_ period: TimePeriod) {
+        loadTask?.cancel()
+        selectedPeriod = period
+        models = []
+        nextCursor = nil
+        hasMore = true
+        loadModels()
+    }
+
     func loadMore() {
         guard !isLoading, !isLoadingMore, hasMore else { return }
         loadModels(isLoadMore: true)
@@ -105,8 +125,8 @@ final class ModelSearchViewModel: ObservableObject {
                     query: query.isEmpty ? nil : query,
                     tag: nil,
                     type: selectedType,
-                    sort: nil,
-                    period: nil,
+                    sort: selectedSort,
+                    period: selectedPeriod,
                     baseModels: baseModelList,
                     cursor: isLoadMore ? nextCursor : nil,
                     limit: KotlinInt(int: pageSize)
