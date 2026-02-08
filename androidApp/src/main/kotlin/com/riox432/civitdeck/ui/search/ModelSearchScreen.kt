@@ -37,6 +37,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -53,7 +54,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.material3.Switch
 import com.riox432.civitdeck.domain.model.BaseModel
 import com.riox432.civitdeck.domain.model.Model
 import com.riox432.civitdeck.domain.model.ModelType
@@ -87,21 +87,9 @@ fun ModelSearchScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("CivitDeck") },
-                actions = {
-                    NsfwToggle(
-                        nsfwFilterLevel = uiState.nsfwFilterLevel,
-                        onToggle = {
-                            val newLevel = if (uiState.nsfwFilterLevel == NsfwFilterLevel.Off) {
-                                NsfwFilterLevel.All
-                            } else {
-                                NsfwFilterLevel.Off
-                            }
-                            viewModel.onNsfwFilterChanged(newLevel)
-                        },
-                    )
-                },
+            SearchTopBar(
+                nsfwFilterLevel = uiState.nsfwFilterLevel,
+                onNsfwToggle = viewModel::onNsfwFilterChanged,
             )
         },
     ) { padding ->
@@ -137,6 +125,30 @@ fun ModelSearchScreen(
             )
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SearchTopBar(
+    nsfwFilterLevel: NsfwFilterLevel,
+    onNsfwToggle: (NsfwFilterLevel) -> Unit,
+) {
+    TopAppBar(
+        title = { Text("CivitDeck") },
+        actions = {
+            NsfwToggle(
+                nsfwFilterLevel = nsfwFilterLevel,
+                onToggle = {
+                    val newLevel = if (nsfwFilterLevel == NsfwFilterLevel.Off) {
+                        NsfwFilterLevel.All
+                    } else {
+                        NsfwFilterLevel.Off
+                    }
+                    onNsfwToggle(newLevel)
+                },
+            )
+        },
+    )
 }
 
 @Composable
