@@ -325,7 +325,7 @@ struct ModelSearchScreen: View {
                 chipButton(label: "All", isSelected: viewModel.selectedType == nil) {
                     viewModel.onTypeSelected(nil)
                 }
-                ForEach(modelTypeOptions, id: \.self) { type in
+                ForEach(SearchFilter.modelTypeOptions, id: \.self) { type in
                     chipButton(label: type.name, isSelected: viewModel.selectedType == type) {
                         viewModel.onTypeSelected(type)
                     }
@@ -339,7 +339,7 @@ struct ModelSearchScreen: View {
     private var baseModelFilterChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: Spacing.sm) {
-                ForEach(baseModelOptions, id: \.self) { baseModel in
+                ForEach(SearchFilter.baseModelOptions, id: \.self) { baseModel in
                     chipButton(
                         label: baseModel.displayName,
                         isSelected: viewModel.selectedBaseModels.contains(baseModel)
@@ -359,13 +359,14 @@ struct ModelSearchScreen: View {
                 chipButton(label: "Fresh Only", isSelected: viewModel.isFreshFindEnabled) {
                     viewModel.onFreshFindToggled()
                 }
-                ForEach(sortOptions, id: \.self) { sort in
-                    chipButton(label: sortLabel(sort), isSelected: viewModel.selectedSort == sort) {
+                ForEach(SearchFilter.sortOptions, id: \.self) { sort in
+                    chipButton(label: SearchFilter.sortLabel(sort), isSelected: viewModel.selectedSort == sort) {
                         viewModel.onSortSelected(sort)
                     }
                 }
-                ForEach(periodOptions, id: \.self) { period in
-                    chipButton(label: periodLabel(period), isSelected: viewModel.selectedPeriod == period) {
+                ForEach(SearchFilter.periodOptions, id: \.self) { period in
+                    let selected = viewModel.selectedPeriod == period
+                    chipButton(label: SearchFilter.periodLabel(period), isSelected: selected) {
                         viewModel.onPeriodSelected(period)
                     }
                 }

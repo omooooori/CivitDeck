@@ -1,34 +1,36 @@
 import SwiftUI
 import Shared
 
-let baseModelOptions: [BaseModel] = [.sd15, .sdxl10, .pony, .flux1D, .flux1S, .sd21, .svd]
-let sortOptions: [CivitSortOrder] = [.mostDownloaded, .highestRated, .newest]
-let periodOptions: [TimePeriod] = [.allTime, .year, .month, .week, .day]
+enum SearchFilter {
+    static let baseModelOptions: [BaseModel] = [.sd15, .sdxl10, .pony, .flux1D, .flux1S, .sd21, .svd]
+    static let sortOptions: [CivitSortOrder] = [.mostDownloaded, .highestRated, .newest]
+    static let periodOptions: [TimePeriod] = [.allTime, .year, .month, .week, .day]
 
-func sortLabel(_ sort: CivitSortOrder) -> String {
-    switch sort {
-    case .highestRated: return "Highest Rated"
-    case .mostDownloaded: return "Most Downloaded"
-    case .newest: return "Newest"
+    static let modelTypeOptions: [ModelType] = [
+        .checkpoint, .lora, .loCon, .controlnet,
+        .textualInversion, .hypernetwork, .upscaler, .vae,
+        .poses, .wildcards, .workflows, .motionModule,
+        .aestheticGradient, .other,
+    ]
+
+    static func sortLabel(_ sort: CivitSortOrder) -> String {
+        switch sort {
+        case .highestRated: return "Highest Rated"
+        case .mostDownloaded: return "Most Downloaded"
+        case .newest: return "Newest"
+        }
+    }
+
+    static func periodLabel(_ period: TimePeriod) -> String {
+        switch period {
+        case .allTime: return "All"
+        case .year: return "Year"
+        case .month: return "Month"
+        case .week: return "Week"
+        case .day: return "Day"
+        }
     }
 }
-
-func periodLabel(_ period: TimePeriod) -> String {
-    switch period {
-    case .allTime: return "All"
-    case .year: return "Year"
-    case .month: return "Month"
-    case .week: return "Week"
-    case .day: return "Day"
-    }
-}
-
-let modelTypeOptions: [ModelType] = [
-    .checkpoint, .lora, .loCon, .controlnet,
-    .textualInversion, .hypernetwork, .upscaler, .vae,
-    .poses, .wildcards, .workflows, .motionModule,
-    .aestheticGradient, .other,
-]
 
 struct HeaderHeightPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
