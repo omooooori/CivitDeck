@@ -482,66 +482,6 @@ extension ModelSearchScreen {
     }
 
     var recommendationSections: some View {
-        ForEach(viewModel.recommendations, id: \.title) { section in
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                Text(section.title)
-                    .font(.civitTitleMedium)
-                    .padding(.horizontal, Spacing.md)
-                Text(section.reason)
-                    .font(.civitBodySmall)
-                    .foregroundColor(.civitOnSurfaceVariant)
-                    .padding(.horizontal, Spacing.md)
-
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: Spacing.sm) {
-                        ForEach(section.models, id: \.id) { model in
-                            NavigationLink(value: model.id) {
-                                ModelCardView(model: model)
-                                    .frame(width: 160, height: 220)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.horizontal, Spacing.md)
-                }
-            }
-            .padding(.bottom, Spacing.sm)
-        }
+        RecommendationSectionsView(recommendations: viewModel.recommendations)
     }
 }
-
-private struct HeaderHeightPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
-    }
-}
-
-private let baseModelOptions: [BaseModel] = [.sd15, .sdxl10, .pony, .flux1D, .flux1S, .sd21, .svd]
-private let sortOptions: [CivitSortOrder] = [.mostDownloaded, .highestRated, .newest]
-private let periodOptions: [TimePeriod] = [.allTime, .year, .month, .week, .day]
-
-private func sortLabel(_ sort: CivitSortOrder) -> String {
-    switch sort {
-    case .highestRated: return "Highest Rated"
-    case .mostDownloaded: return "Most Downloaded"
-    case .newest: return "Newest"
-    }
-}
-
-private func periodLabel(_ period: TimePeriod) -> String {
-    switch period {
-    case .allTime: return "All"
-    case .year: return "Year"
-    case .month: return "Month"
-    case .week: return "Week"
-    case .day: return "Day"
-    }
-}
-
-private let modelTypeOptions: [ModelType] = [
-    .checkpoint, .lora, .loCon, .controlnet,
-    .textualInversion, .hypernetwork, .upscaler, .vae,
-    .poses, .wildcards, .workflows, .motionModule,
-    .aestheticGradient, .other,
-]
