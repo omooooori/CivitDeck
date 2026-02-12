@@ -41,7 +41,7 @@ class BrowsingHistoryRepositoryImpl(
 
     override suspend fun getRecentTags(limit: Int): Map<String, Int> {
         return dao.getRecent(limit)
-            .flatMap { it.tags.split(",").filter { tag -> tag.isNotBlank() } }
+            .flatMap { it.tags.split(",").map { tag -> tag.trim() }.filter { tag -> tag.isNotBlank() } }
             .groupingBy { it }
             .eachCount()
     }

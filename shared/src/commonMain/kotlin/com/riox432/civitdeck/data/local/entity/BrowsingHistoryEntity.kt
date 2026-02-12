@@ -1,9 +1,16 @@
 package com.riox432.civitdeck.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "browsing_history")
+@Entity(
+    tableName = "browsing_history",
+    indices = [
+        Index(value = ["modelId"]),
+        Index(value = ["viewedAt"]),
+    ],
+)
 data class BrowsingHistoryEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val modelId: Long,

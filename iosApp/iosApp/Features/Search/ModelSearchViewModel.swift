@@ -216,11 +216,12 @@ final class ModelSearchViewModel: ObservableObject {
         loadModels(isLoadMore: true)
     }
 
-    func refresh() {
+    func refresh() async {
         loadTask?.cancel()
         nextCursor = nil
         hasMore = true
         loadModels(isRefresh: true)
+        await loadTask?.value
     }
 
     private func loadModels(isLoadMore: Bool = false, isRefresh: Bool = false) {
