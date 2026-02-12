@@ -11,6 +11,7 @@ struct ModelSearchScreen: View {
     @State private var accumulatedDelta: CGFloat = 0
     @State private var isDraggingDown: Bool = false
     @State private var excludeTagInput: String = ""
+    @State private var showFilterSheet: Bool = false
 
     private let columns = [
         GridItem(.flexible(), spacing: Spacing.sm),
@@ -73,14 +74,21 @@ struct ModelSearchScreen: View {
         }
     }
 
+    private var activeFilterCount: Int {
+        var count = 0
+        if viewModel.selectedType != nil { count += 1 }
+        if !viewModel.selectedBaseModels.isEmpty { count += 1 }
+        if viewModel.selectedSort != .mostDownloaded { count += 1 }
+        if viewModel.selectedPeriod != .allTime { count += 1 }
+        if viewModel.isFreshFindEnabled { count += 1 }
+        if !viewModel.excludedTags.isEmpty { count += 1 }
+        return count
+    }
+
     private var collapsibleHeader: some View {
         VStack(spacing: 0) {
-            searchBar
+            searchBarWithFilterButton
             searchHistoryDropdown
-            typeFilterChips
-            baseModelFilterChips
-            sortAndPeriodChips
-            excludedTagsSection
         }
         .background(
             GeometryReader { geo in
@@ -96,46 +104,101 @@ struct ModelSearchScreen: View {
         .offset(y: headerVisible ? 0 : -headerHeight)
         .frame(height: headerVisible ? nil : 0, alignment: .top)
         .clipped()
+        .sheet(isPresented: $showFilterSheet) {
+            filterSheet
+        }
     }
 
-    private var searchBar: some View {
-        HStack {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(.civitOnSurfaceVariant)
-            TextField("Search models...", text: $viewModel.query)
-                .focused($isSearchFocused)
-                .submitLabel(.search)
-                .onSubmit {
-                    viewModel.onSearch()
-                    showHistory = false
+    private var searchBarWithFilterButton: some View {
+        HStack(spacing: Spacing.sm) {
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.civitOnSurfaceVariant)
+                TextField("Search models...", text: $viewModel.query)
+                    .focused($isSearchFocused)
+                    .submitLabel(.search)
+                    .onSubmit {
+                        viewModel.onSearch()
+                        showHistory = false
+                    }
+                    .onChange(of: viewModel.query) { newValue in
+                        showHistory = newValue.isEmpty
+                            && isSearchFocused
+                            && !viewModel.searchHistory.isEmpty
+                    }
+                    .onChange(of: isSearchFocused) { focused in
+                        showHistory = focused
+                            && viewModel.query.isEmpty
+                            && !viewModel.searchHistory.isEmpty
+                    }
+                if !viewModel.query.isEmpty {
+                    Button {
+                        viewModel.query = ""
+                        showHistory = isSearchFocused && !viewModel.searchHistory.isEmpty
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.civitOnSurfaceVariant)
+                    }
                 }
-                .onChange(of: viewModel.query) { newValue in
-                    showHistory = newValue.isEmpty
-                        && isSearchFocused
-                        && !viewModel.searchHistory.isEmpty
-                }
-                .onChange(of: isSearchFocused) { focused in
-                    showHistory = focused
-                        && viewModel.query.isEmpty
-                        && !viewModel.searchHistory.isEmpty
-                }
-            if !viewModel.query.isEmpty {
-                Button {
-                    viewModel.query = ""
-                    showHistory = isSearchFocused && !viewModel.searchHistory.isEmpty
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.civitOnSurfaceVariant)
+            }
+            .padding(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: CornerRadius.searchBar)
+                    .stroke(Color.civitOutlineVariant, lineWidth: 1)
+            )
+
+            Button {
+                showFilterSheet = true
+            } label: {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: "line.3.horizontal.decrease")
+                        .font(.title3)
+                        .foregroundColor(.civitOnSurface)
+                    if activeFilterCount > 0 {
+                        Text("\(activeFilterCount)")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 16, height: 16)
+                            .background(Color.civitPrimary)
+                            .clipShape(Circle())
+                            .offset(x: 4, y: -4)
+                    }
                 }
             }
         }
-        .padding(10)
-        .overlay(
-            RoundedRectangle(cornerRadius: CornerRadius.searchBar)
-                .stroke(Color.civitOutlineVariant, lineWidth: 1)
-        )
         .padding(.horizontal, Spacing.lg)
         .padding(.vertical, Spacing.sm)
+    }
+
+    private var filterSheet: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: Spacing.sm) {
+                    typeFilterChips
+                    baseModelFilterChips
+                    sortAndPeriodChips
+                    excludedTagsSection
+                }
+                .padding(.vertical, Spacing.sm)
+            }
+            .navigationTitle("Filters")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Reset") {
+                        viewModel.resetFilters()
+                        showFilterSheet = false
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        showFilterSheet = false
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
     }
 
     @ViewBuilder
@@ -262,7 +325,7 @@ struct ModelSearchScreen: View {
                 chipButton(label: "All", isSelected: viewModel.selectedType == nil) {
                     viewModel.onTypeSelected(nil)
                 }
-                ForEach(modelTypeOptions, id: \.self) { type in
+                ForEach(SearchFilter.modelTypeOptions, id: \.self) { type in
                     chipButton(label: type.name, isSelected: viewModel.selectedType == type) {
                         viewModel.onTypeSelected(type)
                     }
@@ -276,7 +339,7 @@ struct ModelSearchScreen: View {
     private var baseModelFilterChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: Spacing.sm) {
-                ForEach(baseModelOptions, id: \.self) { baseModel in
+                ForEach(SearchFilter.baseModelOptions, id: \.self) { baseModel in
                     chipButton(
                         label: baseModel.displayName,
                         isSelected: viewModel.selectedBaseModels.contains(baseModel)
@@ -296,13 +359,14 @@ struct ModelSearchScreen: View {
                 chipButton(label: "Fresh Only", isSelected: viewModel.isFreshFindEnabled) {
                     viewModel.onFreshFindToggled()
                 }
-                ForEach(sortOptions, id: \.self) { sort in
-                    chipButton(label: sortLabel(sort), isSelected: viewModel.selectedSort == sort) {
+                ForEach(SearchFilter.sortOptions, id: \.self) { sort in
+                    chipButton(label: SearchFilter.sortLabel(sort), isSelected: viewModel.selectedSort == sort) {
                         viewModel.onSortSelected(sort)
                     }
                 }
-                ForEach(periodOptions, id: \.self) { period in
-                    chipButton(label: periodLabel(period), isSelected: viewModel.selectedPeriod == period) {
+                ForEach(SearchFilter.periodOptions, id: \.self) { period in
+                    let selected = viewModel.selectedPeriod == period
+                    chipButton(label: SearchFilter.periodLabel(period), isSelected: selected) {
                         viewModel.onPeriodSelected(period)
                     }
                 }
@@ -419,66 +483,6 @@ extension ModelSearchScreen {
     }
 
     var recommendationSections: some View {
-        ForEach(viewModel.recommendations, id: \.title) { section in
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                Text(section.title)
-                    .font(.civitTitleMedium)
-                    .padding(.horizontal, Spacing.md)
-                Text(section.reason)
-                    .font(.civitBodySmall)
-                    .foregroundColor(.civitOnSurfaceVariant)
-                    .padding(.horizontal, Spacing.md)
-
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: Spacing.sm) {
-                        ForEach(section.models, id: \.id) { model in
-                            NavigationLink(value: model.id) {
-                                ModelCardView(model: model)
-                                    .frame(width: 160, height: 220)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.horizontal, Spacing.md)
-                }
-            }
-            .padding(.bottom, Spacing.sm)
-        }
+        RecommendationSectionsView(recommendations: viewModel.recommendations)
     }
 }
-
-private struct HeaderHeightPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
-    }
-}
-
-private let baseModelOptions: [BaseModel] = [.sd15, .sdxl10, .pony, .flux1D, .flux1S, .sd21, .svd]
-private let sortOptions: [CivitSortOrder] = [.mostDownloaded, .highestRated, .newest]
-private let periodOptions: [TimePeriod] = [.allTime, .year, .month, .week, .day]
-
-private func sortLabel(_ sort: CivitSortOrder) -> String {
-    switch sort {
-    case .highestRated: return "Highest Rated"
-    case .mostDownloaded: return "Most Downloaded"
-    case .newest: return "Newest"
-    }
-}
-
-private func periodLabel(_ period: TimePeriod) -> String {
-    switch period {
-    case .allTime: return "All"
-    case .year: return "Year"
-    case .month: return "Month"
-    case .week: return "Week"
-    case .day: return "Day"
-    }
-}
-
-private let modelTypeOptions: [ModelType] = [
-    .checkpoint, .lora, .loCon, .controlnet,
-    .textualInversion, .hypernetwork, .upscaler, .vae,
-    .poses, .wildcards, .workflows, .motionModule,
-    .aestheticGradient, .other,
-]
