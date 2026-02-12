@@ -25,9 +25,7 @@ struct FavoritesScreen: View {
                 ModelDetailScreen(modelId: modelId)
             }
         }
-        .task {
-            await viewModel.observe()
-        }
+        // Observation starts automatically in ViewModel init
     }
 
     private var favoritesGrid: some View {

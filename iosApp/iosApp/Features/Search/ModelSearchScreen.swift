@@ -315,7 +315,7 @@ struct ModelSearchScreen: View {
         )
         .animation(MotionAnimation.standard, value: viewModel.isLoadingMore)
         .refreshable {
-            viewModel.refresh()
+            await viewModel.refresh()
         }
     }
 
@@ -400,7 +400,7 @@ struct ModelSearchScreen: View {
                 .foregroundColor(.civitError)
                 .multilineTextAlignment(.center)
             Button("Retry") {
-                viewModel.refresh()
+                Task { await viewModel.refresh() }
             }
             .buttonStyle(.bordered)
         }

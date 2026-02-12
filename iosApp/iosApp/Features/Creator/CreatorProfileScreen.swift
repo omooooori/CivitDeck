@@ -50,7 +50,7 @@ struct CreatorProfileScreen: View {
             }
         }
         .refreshable {
-            viewModel.refresh()
+            await viewModel.refresh()
         }
     }
 
@@ -60,7 +60,7 @@ struct CreatorProfileScreen: View {
                 .foregroundColor(.civitError)
                 .multilineTextAlignment(.center)
             Button("Retry") {
-                viewModel.refresh()
+                Task { await viewModel.refresh() }
             }
             .buttonStyle(.bordered)
         }

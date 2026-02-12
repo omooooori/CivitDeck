@@ -92,7 +92,7 @@ struct ImageGridSheet: View {
                 onImageSelected(index)
             }
         } label: {
-            AsyncImage(url: URL(string: image.url)) { phase in
+            CachedAsyncImage(url: URL(string: image.url)) { phase in
                 switch phase {
                 case .success(let img):
                     img.resizable().scaledToFill().transition(.opacity)

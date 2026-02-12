@@ -38,7 +38,7 @@ import kotlinx.coroutines.IO
         ExcludedTagEntity::class,
         HiddenModelEntity::class,
     ],
-    version = 3,
+    version = 4,
 )
 @ConstructedBy(CivitDeckDatabaseConstructor::class)
 abstract class CivitDeckDatabase : RoomDatabase() {
@@ -111,9 +111,26 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
     }
 }
 
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_browsing_history_modelId` " +
+                "ON `browsing_history` (`modelId`)",
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_browsing_history_viewedAt` " +
+                "ON `browsing_history` (`viewedAt`)",
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_cached_api_responses_cachedAt` " +
+                "ON `cached_api_responses` (`cachedAt`)",
+        )
+    }
+}
+
 fun getRoomDatabase(builder: RoomDatabase.Builder<CivitDeckDatabase>): CivitDeckDatabase {
     return builder
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()
