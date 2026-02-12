@@ -10,6 +10,8 @@ struct ModelDetailScreen: View {
 
     @State private var isDescriptionExpanded = false
     @State private var selectedCarouselIndex: Int?
+    @State private var showImageGrid = false
+    @State private var gridSelectedIndex: Int?
 
     var body: some View {
         Group {
@@ -57,6 +59,22 @@ struct ModelDetailScreen: View {
             set: { if !$0 { selectedCarouselIndex = nil } }
         )) {
             carouselViewer
+        }
+        .sheet(isPresented: $showImageGrid) {
+            ImageGridSheet(
+                images: filteredImages,
+                onDismiss: { showImageGrid = false },
+                onImageSelected: { gridSelectedIndex = $0 }
+            )
+        }
+        .fullScreenCover(isPresented: Binding(
+            get: { gridSelectedIndex != nil },
+            set: { if !$0 { gridSelectedIndex = nil } }
+        )) {
+            GridImageViewer(
+                images: filteredImages,
+                selectedIndex: $gridSelectedIndex
+            )
         }
     }
 
@@ -130,7 +148,7 @@ struct ModelDetailScreen: View {
                 modelHeader(model: model)
                 statsRow(model: model)
                 if let version = viewModel.selectedVersion {
-                    viewImagesButton(modelVersionId: version.id)
+                    imageActionsRow(modelVersionId: version.id)
                 }
                 tagsSection(tags: model.tags)
                 descriptionSection(description: model.description_)
@@ -264,16 +282,28 @@ struct ModelDetailScreen: View {
         }
     }
 
-    // MARK: - View Images Button
+    // MARK: - Image Actions Row
 
-    private func viewImagesButton(modelVersionId: Int64) -> some View {
-        NavigationLink {
-            ImageGalleryScreen(modelVersionId: modelVersionId)
-        } label: {
-            Text("View Community Images")
-                .frame(maxWidth: .infinity)
+    private func imageActionsRow(modelVersionId: Int64) -> some View {
+        HStack(spacing: Spacing.sm) {
+            NavigationLink {
+                ImageGalleryScreen(modelVersionId: modelVersionId)
+            } label: {
+                Text("View Community Images")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+
+            if !filteredImages.isEmpty {
+                Button {
+                    showImageGrid = true
+                } label: {
+                    SwiftUI.Image(systemName: "square.grid.2x2")
+                        .font(.title3)
+                }
+                .buttonStyle(.bordered)
+            }
         }
-        .buttonStyle(.bordered)
         .padding(.horizontal, Spacing.lg)
     }
 
@@ -445,6 +475,116 @@ struct ModelDetailScreen: View {
             .buttonStyle(.bordered)
         }
         .padding()
+    }
+}
+
+// MARK: - Image Grid Sheet
+
+private struct ImageGridSheet: View {
+    let images: [ModelImage]
+    let onDismiss: () -> Void
+    let onImageSelected: (Int) -> Void
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: Spacing.sm),
+                        GridItem(.flexible(), spacing: Spacing.sm),
+                    ],
+                    spacing: Spacing.sm
+                ) {
+                    ForEach(Array(images.enumerated()), id: \.element.url) { index, image in
+                        gridImageCell(image: image, index: index)
+                    }
+                }
+                .padding(Spacing.sm)
+            }
+            .navigationTitle("Version Images (\(images.count))")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { onDismiss() }
+                }
+            }
+        }
+    }
+
+    private func gridImageCell(image: ModelImage, index: Int) -> some View {
+        let aspectRatio = (image.width > 0 && image.height > 0)
+            ? CGFloat(image.width) / CGFloat(image.height) : 1.0
+        return Button {
+            onDismiss()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                onImageSelected(index)
+            }
+        } label: {
+            AsyncImage(url: URL(string: image.url)) { phase in
+                switch phase {
+                case .success(let img):
+                    img.resizable().scaledToFill().transition(.opacity)
+                case .failure:
+                    Rectangle().fill(Color.civitSurfaceVariant)
+                        .overlay { SwiftUI.Image(systemName: "photo")
+                            .foregroundColor(.civitOnSurfaceVariant) }
+                case .empty:
+                    Rectangle().fill(Color.civitSurfaceVariant).shimmer()
+                @unknown default:
+                    EmptyView()
+                }
+            }
+            .aspectRatio(aspectRatio, contentMode: .fill)
+            .clipped()
+            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.image))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Grid Image Viewer
+
+private struct GridImageViewer: View {
+    let images: [ModelImage]
+    @Binding var selectedIndex: Int?
+
+    var body: some View {
+        if let startIndex = selectedIndex, !images.isEmpty {
+            ZStack {
+                Color.black.ignoresSafeArea()
+                TabView(selection: Binding(
+                    get: { startIndex },
+                    set: { selectedIndex = $0 }
+                )) {
+                    ForEach(Array(images.enumerated()), id: \.offset) { i, image in
+                        ZoomableImageView(
+                            url: image.url,
+                            pageIndex: i,
+                            currentPageIndex: startIndex
+                        )
+                        .ignoresSafeArea()
+                        .tag(i)
+                    }
+                }
+                .tabViewStyle(.page(indexDisplayMode: .automatic))
+
+                VStack {
+                    HStack {
+                        Button { selectedIndex = nil } label: {
+                            SwiftUI.Image(systemName: "xmark")
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                                .padding(10)
+                                .background(.ultraThinMaterial, in: Circle())
+                        }
+                        Spacer()
+                    }
+                    .padding(16)
+                    Spacer()
+                }
+            }
+        }
     }
 }
 
