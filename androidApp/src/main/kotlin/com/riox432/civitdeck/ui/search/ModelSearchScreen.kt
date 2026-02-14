@@ -39,9 +39,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.FilterList
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
@@ -53,10 +51,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -125,8 +121,6 @@ private fun rememberCollapsibleHeaderState(): CollapsibleHeaderState {
 fun ModelSearchScreen(
     viewModel: ModelSearchViewModel,
     onModelClick: (Long, String?, String) -> Unit = { _, _, _ -> },
-    onSavedPromptsClick: () -> Unit = {},
-    onSettingsClick: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val searchHistory by viewModel.searchHistory.collectAsStateWithLifecycle()
@@ -147,24 +141,15 @@ fun ModelSearchScreen(
 
     HeaderSnapEffect(gridState = gridState, headerState = headerState)
 
-    Scaffold(
-        topBar = {
-            SearchTopBar(
-                onSavedPromptsClick = onSavedPromptsClick,
-                onSettingsClick = onSettingsClick,
-            )
-        },
-    ) { padding ->
-        SearchScreenBody(
-            padding = padding,
-            headerState = headerState,
-            uiState = uiState,
-            searchHistory = searchHistory,
-            gridState = gridState,
-            viewModel = viewModel,
-            onModelClick = onModelClick,
-        )
-    }
+    SearchScreenBody(
+        padding = PaddingValues(),
+        headerState = headerState,
+        uiState = uiState,
+        searchHistory = searchHistory,
+        gridState = gridState,
+        viewModel = viewModel,
+        onModelClick = onModelClick,
+    )
 }
 
 @Composable
@@ -290,25 +275,6 @@ private fun countActiveFilters(uiState: ModelSearchUiState): Int {
     if (uiState.isFreshFindEnabled) count++
     if (uiState.excludedTags.isNotEmpty()) count++
     return count
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SearchTopBar(
-    onSavedPromptsClick: () -> Unit,
-    onSettingsClick: () -> Unit,
-) {
-    TopAppBar(
-        title = { Text("CivitDeck") },
-        actions = {
-            IconButton(onClick = onSavedPromptsClick) {
-                Icon(Icons.Outlined.BookmarkBorder, contentDescription = "Saved Prompts")
-            }
-            IconButton(onClick = onSettingsClick) {
-                Icon(Icons.Outlined.Settings, contentDescription = "Settings")
-            }
-        },
-    )
 }
 
 @Composable
