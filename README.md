@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/app_icon.png" width="128" alt="CivitDeck Icon" />
+
 # CivitDeck
 
 **Browse CivitAI models, images, and prompts natively on Android & iOS**
