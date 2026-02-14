@@ -63,14 +63,18 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -136,6 +140,7 @@ private fun rememberCollapsibleHeaderState(): CollapsibleHeaderState {
 fun ModelSearchScreen(
     viewModel: ModelSearchViewModel,
     onModelClick: (Long, String?, String) -> Unit = { _, _, _ -> },
+    scrollToTopTrigger: Int = 0,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val searchHistory by viewModel.searchHistory.collectAsStateWithLifecycle()
@@ -145,6 +150,15 @@ fun ModelSearchScreen(
     val headerState = rememberCollapsibleHeaderState()
 
     HeaderSnapEffect(gridState = gridState, headerState = headerState)
+
+    var lastHandledTrigger by rememberSaveable { mutableIntStateOf(scrollToTopTrigger) }
+    LaunchedEffect(scrollToTopTrigger) {
+        if (scrollToTopTrigger != lastHandledTrigger) {
+            lastHandledTrigger = scrollToTopTrigger
+            gridState.animateScrollToItem(0)
+            headerState.offsetPx = 0f
+        }
+    }
 
     SearchScreenBody(
         padding = PaddingValues(),
@@ -883,6 +897,7 @@ private fun FilterChipItem(
     }
 }
 
+@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ModelSearchContent(
@@ -905,10 +920,22 @@ private fun ModelSearchContent(
         else -> "content"
     }
 
+    val pullToRefreshState = rememberPullToRefreshState()
+
     PullToRefreshBox(
         isRefreshing = refreshState is LoadState.Loading && lazyPagingItems.itemCount > 0,
         onRefresh = { lazyPagingItems.refresh() },
         modifier = Modifier.fillMaxSize(),
+        state = pullToRefreshState,
+        indicator = {
+            PullToRefreshDefaults.Indicator(
+                state = pullToRefreshState,
+                isRefreshing = uiState.isRefreshing,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = topPadding),
+            )
+        },
     ) {
         androidx.compose.animation.Crossfade(
             targetState = stateKey,
