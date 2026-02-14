@@ -21,6 +21,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -74,8 +79,10 @@ fun ModelCard(
 @Composable
 private fun ModelCardContent(model: Model, sharedElementSuffix: String) {
     Column {
-        val thumbnailUrl = model.modelVersions
-            .firstOrNull()?.images?.firstOrNull()?.url
+        val imageUrls = model.modelVersions
+            .firstOrNull()?.images?.map { it.url } ?: emptyList()
+        var currentImageIndex by remember { mutableIntStateOf(0) }
+        val thumbnailUrl = imageUrls.getOrNull(currentImageIndex)
 
         if (thumbnailUrl != null) {
             ModelCardThumbnail(
@@ -83,6 +90,11 @@ private fun ModelCardContent(model: Model, sharedElementSuffix: String) {
                 modelId = model.id,
                 contentDescription = model.name,
                 sharedElementSuffix = sharedElementSuffix,
+                onError = {
+                    if (currentImageIndex + 1 < imageUrls.size) {
+                        currentImageIndex++
+                    }
+                },
             )
         } else {
             ImageErrorPlaceholder(
@@ -103,6 +115,7 @@ private fun ModelCardThumbnail(
     modelId: Long,
     contentDescription: String,
     sharedElementSuffix: String = "",
+    onError: () -> Unit = {},
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedContentScope = LocalNavAnimatedContentScope.current
@@ -144,6 +157,7 @@ private fun ModelCardThumbnail(
             )
         },
         error = {
+            LaunchedEffect(thumbnailUrl) { onError() }
             ImageErrorPlaceholder(
                 modifier = Modifier
                     .fillMaxWidth()
