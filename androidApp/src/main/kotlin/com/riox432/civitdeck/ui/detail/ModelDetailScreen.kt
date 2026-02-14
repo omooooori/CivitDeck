@@ -56,6 +56,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -179,6 +180,18 @@ private fun ModelDetailTopBar(
     )
 }
 
+private fun prepareImages(
+    allImages: List<ModelImage>?,
+    uiState: ModelDetailUiState,
+    initialThumbnailUrl: String?,
+): List<ModelImage> {
+    val filtered = (allImages ?: emptyList()).filterByNsfwLevel(uiState.nsfwFilterLevel)
+    if (initialThumbnailUrl == null || uiState.selectedVersionIndex != 0) return filtered
+    val idx = filtered.indexOfFirst { it.url == initialThumbnailUrl }
+    if (idx <= 0) return filtered
+    return listOf(filtered[idx]) + filtered.subList(0, idx) + filtered.subList(idx + 1, filtered.size)
+}
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ModelDetailBody(
@@ -194,9 +207,9 @@ private fun ModelDetailBody(
 ) {
     val model = uiState.model
     val selectedVersion = model?.modelVersions?.getOrNull(uiState.selectedVersionIndex)
-    val images = (selectedVersion?.images ?: emptyList()).let { allImages ->
-        allImages.filterByNsfwLevel(uiState.nsfwFilterLevel)
-    }
+    val allImages = prepareImages(selectedVersion?.images, uiState, initialThumbnailUrl)
+    var failedImageUrls by remember { mutableStateOf(emptySet<String>()) }
+    val images = allImages.filter { it.url !in failedImageUrls }
     var selectedCarouselIndex by remember { mutableStateOf<Int?>(null) }
     var showImageGrid by remember { mutableStateOf(false) }
     var gridSelectedIndex by remember { mutableStateOf<Int?>(null) }
@@ -213,6 +226,7 @@ private fun ModelDetailBody(
                     modelId = modelId,
                     sharedElementSuffix = sharedElementSuffix,
                     onImageClick = { selectedCarouselIndex = it },
+                    onImageError = { url -> failedImageUrls = failedImageUrls + url },
                 )
             }
             initialThumbnailUrl != null -> {
@@ -525,6 +539,7 @@ private fun ImageCarousel(
     modelId: Long,
     sharedElementSuffix: String = "",
     onImageClick: (Int) -> Unit = {},
+    onImageError: (String) -> Unit = {},
 ) {
     if (images.isEmpty()) return
 
@@ -541,6 +556,7 @@ private fun ImageCarousel(
                 sharedElementSuffix = sharedElementSuffix,
                 applySharedElement = page == pagerState.currentPage,
                 onClick = { onImageClick(page) },
+                onError = { onImageError(images[page].url) },
             )
         }
 
@@ -564,6 +580,7 @@ private fun CarouselPage(
     sharedElementSuffix: String = "",
     applySharedElement: Boolean,
     onClick: () -> Unit = {},
+    onError: () -> Unit = {},
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedContentScope = LocalNavAnimatedContentScope.current
@@ -607,6 +624,7 @@ private fun CarouselPage(
             )
         },
         error = {
+            LaunchedEffect(image.url) { onError() }
             ImageErrorPlaceholder(
                 modifier = Modifier
                     .fillMaxWidth()
