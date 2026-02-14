@@ -77,79 +77,69 @@ final class ModelDetailViewModel: ObservableObject {
         enrichedVersionIds.insert(versionId)
         Task {
             do {
-                let result = try await getImagesUseCase.invoke(
-                    modelId: nil,
-                    modelVersionId: KotlinLong(value: versionId),
-                    username: nil,
-                    sort: nil,
-                    period: nil,
-                    nsfwLevel: nil,
-                    limit: KotlinInt(value: 20),
-                    cursor: nil
-                )
-                let metaByImageId = Dictionary(
-                    uniqueKeysWithValues: result.items
-                        .compactMap { item -> (String, ImageGenerationMeta)? in
-                            guard let img = item as? Image,
-                                  let meta = img.meta,
-                                  let imageId = Self.extractImageId(img.url)
-                            else { return nil }
-                            return (imageId, meta)
-                        }
-                )
+                let metaByImageId = try await fetchImageMeta(versionId: versionId)
                 guard !metaByImageId.isEmpty else { return }
-                let enrichedImages: [ModelImage] = version.images.map { image in
-                    if image.meta == nil,
-                       let imageId = Self.extractImageId(image.url),
-                       let meta = metaByImageId[imageId] {
-                        return ModelImage(
-                            url: image.url,
-                            nsfw: image.nsfw,
-                            nsfwLevel: image.nsfwLevel,
-                            width: image.width,
-                            height: image.height,
-                            hash: image.hash_,
-                            meta: meta
-                        )
-                    }
-                    return image
-                }
-                let updatedVersions: [ModelVersion] = model.modelVersions.map { v in
-                    if v.id == versionId {
-                        return ModelVersion(
-                            id: v.id,
-                            modelId: v.modelId,
-                            name: v.name,
-                            description: v.description_,
-                            createdAt: v.createdAt,
-                            baseModel: v.baseModel,
-                            trainedWords: v.trainedWords,
-                            downloadUrl: v.downloadUrl,
-                            files: v.files,
-                            images: enrichedImages,
-                            stats: v.stats
-                        )
-                    }
-                    return v
-                }
-                self.model = Model(
-                    id: model.id,
-                    name: model.name,
-                    description: model.description_,
-                    type: model.type,
-                    nsfw: model.nsfw,
-                    tags: model.tags,
-                    mode: model.mode,
-                    creator: model.creator,
-                    stats: model.stats,
-                    modelVersions: updatedVersions
-                )
+                applyEnrichedMeta(metaByImageId, to: version, in: model)
             } catch is CancellationError {
                 return
             } catch {
                 enrichedVersionIds.remove(versionId)
             }
         }
+    }
+
+    private func fetchImageMeta(versionId: Int64) async throws -> [String: ImageGenerationMeta] {
+        let result = try await getImagesUseCase.invoke(
+            modelId: nil,
+            modelVersionId: KotlinLong(value: versionId),
+            username: nil,
+            sort: nil,
+            period: nil,
+            nsfwLevel: nil,
+            limit: KotlinInt(value: 20),
+            cursor: nil
+        )
+        return Dictionary(
+            uniqueKeysWithValues: result.items
+                .compactMap { item -> (String, ImageGenerationMeta)? in
+                    guard let img = item as? Image,
+                          let meta = img.meta,
+                          let imageId = Self.extractImageId(img.url)
+                    else { return nil }
+                    return (imageId, meta)
+                }
+        )
+    }
+
+    private func applyEnrichedMeta(
+        _ metaByImageId: [String: ImageGenerationMeta],
+        to version: ModelVersion,
+        in model: Model
+    ) {
+        let enrichedImages: [ModelImage] = version.images.map { image in
+            if image.meta == nil,
+               let imageId = Self.extractImageId(image.url),
+               let meta = metaByImageId[imageId] {
+                return ModelImage(
+                    url: image.url, nsfw: image.nsfw, nsfwLevel: image.nsfwLevel,
+                    width: image.width, height: image.height, hash: image.hash_, meta: meta
+                )
+            }
+            return image
+        }
+        let updatedVersions: [ModelVersion] = model.modelVersions.map { v in
+            guard v.id == version.id else { return v }
+            return ModelVersion(
+                id: v.id, modelId: v.modelId, name: v.name, description: v.description_,
+                createdAt: v.createdAt, baseModel: v.baseModel, trainedWords: v.trainedWords,
+                downloadUrl: v.downloadUrl, files: v.files, images: enrichedImages, stats: v.stats
+            )
+        }
+        self.model = Model(
+            id: model.id, name: model.name, description: model.description_,
+            type: model.type, nsfw: model.nsfw, tags: model.tags, mode: model.mode,
+            creator: model.creator, stats: model.stats, modelVersions: updatedVersions
+        )
     }
 
     // URL format: https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/{uuid}/...
