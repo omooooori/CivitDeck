@@ -4,6 +4,7 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.riox432.civitdeck.domain.model.Model
 import com.riox432.civitdeck.domain.model.NsfwFilterLevel
+import com.riox432.civitdeck.domain.model.SortOrder
 import com.riox432.civitdeck.domain.model.filterNsfwImages
 import com.riox432.civitdeck.domain.usecase.GetModelsUseCase
 import com.riox432.civitdeck.domain.usecase.GetViewedModelIdsUseCase
@@ -14,6 +15,8 @@ internal class ModelPagingSource(
     private val filterState: FilterState,
     private val hiddenModelIds: Set<Long>,
 ) : PagingSource<String, Model>() {
+
+    private var sortWatermark: Double? = null
 
     override suspend fun load(params: LoadParams<String>): LoadResult<String, Model> {
         return try {
@@ -45,11 +48,18 @@ internal class ModelPagingSource(
                 )
 
                 val filtered = applyClientFilters(result.items, viewedIds)
-                accumulated.addAll(filtered)
+                val sorted = enforceSortOrder(filtered)
+                accumulated.addAll(sorted)
+                if (sorted.isNotEmpty()) {
+                    val iterationMin = sorted.minOf { sortValueOf(it) }
+                    sortWatermark = sortWatermark?.let { minOf(it, iterationMin) } ?: iterationMin
+                }
                 nextCursor = result.metadata.nextCursor
                 if (nextCursor == null || nextCursor == cursor) return@repeat
                 cursor = nextCursor
             }
+
+            accumulated.sortByDescending { sortValueOf(it) }
 
             LoadResult.Page(
                 data = accumulated,
@@ -88,6 +98,17 @@ internal class ModelPagingSource(
             filtered = filtered.filter { it.id !in hiddenModelIds }
         }
         return filtered
+    }
+
+    private fun sortValueOf(model: Model): Double = when (filterState.selectedSort) {
+        SortOrder.MostDownloaded -> model.stats.downloadCount.toDouble()
+        SortOrder.HighestRated -> model.stats.rating
+        SortOrder.Newest -> model.id.toDouble()
+    }
+
+    private fun enforceSortOrder(models: List<Model>): List<Model> {
+        val watermark = sortWatermark ?: return models
+        return models.filter { sortValueOf(it) <= watermark }
     }
 
     companion object {
