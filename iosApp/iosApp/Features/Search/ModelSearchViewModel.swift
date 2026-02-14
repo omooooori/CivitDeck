@@ -43,6 +43,7 @@ final class ModelSearchViewModel: ObservableObject {
     private var nextCursor: String?
     private var loadTask: Task<Void, Never>?
     private var hiddenModelIds: Set<KotlinLong> = []
+    private var sortWatermark: Double?
 
     private let pageSize: Int32 = 20
     private let maxFetchIterations = 5
@@ -112,9 +113,7 @@ final class ModelSearchViewModel: ObservableObject {
             nsfwFilterLevel = value
             if prev != value {
                 loadTask?.cancel()
-                models = []
-                nextCursor = nil
-                hasMore = true
+                resetPaginationState()
                 loadModels()
             }
         }
@@ -132,9 +131,7 @@ final class ModelSearchViewModel: ObservableObject {
             Task { try? await addSearchHistoryUseCase.invoke(query: trimmed) }
         }
         loadTask?.cancel()
-        models = []
-        nextCursor = nil
-        hasMore = true
+        resetPaginationState()
         loadModels()
     }
 
@@ -150,9 +147,7 @@ final class ModelSearchViewModel: ObservableObject {
     func onTypeSelected(_ type: ModelType?) {
         loadTask?.cancel()
         selectedType = type
-        models = []
-        nextCursor = nil
-        hasMore = true
+        resetPaginationState()
         loadModels()
     }
 
@@ -163,36 +158,28 @@ final class ModelSearchViewModel: ObservableObject {
         } else {
             selectedBaseModels.insert(baseModel)
         }
-        models = []
-        nextCursor = nil
-        hasMore = true
+        resetPaginationState()
         loadModels()
     }
 
     func onSortSelected(_ sort: CivitSortOrder) {
         loadTask?.cancel()
         selectedSort = sort
-        models = []
-        nextCursor = nil
-        hasMore = true
+        resetPaginationState()
         loadModels()
     }
 
     func onPeriodSelected(_ period: TimePeriod) {
         loadTask?.cancel()
         selectedPeriod = period
-        models = []
-        nextCursor = nil
-        hasMore = true
+        resetPaginationState()
         loadModels()
     }
 
     func onFreshFindToggled() {
         loadTask?.cancel()
         isFreshFindEnabled.toggle()
-        models = []
-        nextCursor = nil
-        hasMore = true
+        resetPaginationState()
         loadModels()
     }
 
@@ -204,9 +191,7 @@ final class ModelSearchViewModel: ObservableObject {
         selectedBaseModels = []
         isFreshFindEnabled = false
         includedTags = []
-        models = []
-        nextCursor = nil
-        hasMore = true
+        resetPaginationState()
         loadModels()
     }
 
@@ -257,9 +242,7 @@ final class ModelSearchViewModel: ObservableObject {
 
     private func reloadModels() {
         loadTask?.cancel()
-        models = []
-        nextCursor = nil
-        hasMore = true
+        resetPaginationState()
         loadModels()
     }
 
@@ -280,8 +263,30 @@ final class ModelSearchViewModel: ObservableObject {
         loadTask?.cancel()
         nextCursor = nil
         hasMore = true
+        sortWatermark = nil
         loadModels(isRefresh: true)
         await loadTask?.value
+    }
+
+    private func resetPaginationState() {
+        models = []
+        nextCursor = nil
+        hasMore = true
+        sortWatermark = nil
+    }
+
+    private func sortValueOf(_ model: Model) -> Double {
+        switch selectedSort {
+        case .mostDownloaded: return Double(model.stats.downloadCount)
+        case .highestRated: return model.stats.rating
+        case .newest: return Double(model.id)
+        default: return Double(model.id)
+        }
+    }
+
+    private func enforceSortOrder(_ models: [Model]) -> [Model] {
+        guard let watermark = sortWatermark else { return models }
+        return models.filter { sortValueOf($0) <= watermark }
     }
 
     private func loadModels(isLoadMore: Bool = false, isRefresh: Bool = false) {
@@ -352,15 +357,22 @@ final class ModelSearchViewModel: ObservableObject {
 
             let allModels = result.items.compactMap { $0 as? Model }
             let filtered = applyClientFilters(allModels, viewedIds: viewedIds)
-            for model in filtered where !accumulatedIds.contains(model.id) {
+            let sorted = enforceSortOrder(filtered)
+            for model in sorted where !accumulatedIds.contains(model.id) {
                 accumulated.append(model)
                 accumulatedIds.insert(model.id)
+            }
+            if !sorted.isEmpty {
+                let iterationMin = sorted.map { sortValueOf($0) }.min()!
+                sortWatermark = sortWatermark.map { min($0, iterationMin) } ?? iterationMin
             }
             logger.debug("Iteration \(iteration): fetched=\(allModels.count) filtered=\(filtered.count) accumulated=\(accumulated.count)")
             fetchedNextCursor = result.metadata.nextCursor
             if fetchedNextCursor == nil || fetchedNextCursor == currentCursor { break }
             currentCursor = fetchedNextCursor
         }
+
+        accumulated.sort { sortValueOf($0) > sortValueOf($1) }
 
         return FetchResult(models: accumulated, cursor: fetchedNextCursor)
     }
