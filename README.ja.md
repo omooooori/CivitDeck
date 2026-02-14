@@ -29,9 +29,9 @@ CivitDeck がそのギャップを埋めます。モデルの閲覧、画像の�
 
 | Android | iOS |
 |---------|-----|
-| ![Android Search](docs/screenshots/android_search.png) | ![iOS Search](docs/screenshots/ios_search.png) |
-| ![Android Detail](docs/screenshots/android_detail.png) | ![iOS Detail](docs/screenshots/ios_detail.png) |
-| ![Android Gallery](docs/screenshots/android_gallery.png) | ![iOS Gallery](docs/screenshots/ios_gallery.png) |
+| <img src="docs/screenshots/android_search.png" alt="Android Search" width="300"> | <img src="docs/screenshots/ios_search.png" alt="iOS Search" width="300"> |
+| <img src="docs/screenshots/android_detail.png" alt="Android Detail" width="300"> | <img src="docs/screenshots/ios_detail.png" alt="iOS Detail" width="300"> |
+| <img src="docs/screenshots/android_gallery.png" alt="Android Gallery" width="300"> | <img src="docs/screenshots/ios_gallery.png" alt="iOS Gallery" width="300"> |
 
 ## 機能
 
