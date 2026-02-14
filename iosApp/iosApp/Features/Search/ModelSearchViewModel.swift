@@ -294,63 +294,17 @@ final class ModelSearchViewModel: ObservableObject {
             error = nil
 
             do {
-                let baseModelList: [BaseModel]? = selectedBaseModels.isEmpty ? nil : Array(selectedBaseModels)
-                let nsfw: KotlinBoolean? = nsfwFilterLevel == .off ? KotlinBoolean(bool: false) : nil
-                let viewedIds: Set<KotlinLong> = isFreshFindEnabled
-                    ? try await getViewedModelIdsUseCase.invoke()
-                    : []
-
-                var accumulated: [Model] = []
-                var accumulatedIds = Set<Int64>()
-                var currentCursor: String? = isLoadMore ? nextCursor : nil
-                var fetchedNextCursor: String? = nil
-
-                // Pre-populate IDs to avoid duplicates with existing models
-                if isLoadMore {
-                    accumulatedIds = Set(models.map { $0.id })
-                }
-
-                for iteration in 0..<maxFetchIterations {
-                    guard !Task.isCancelled else { return }
-                    if accumulated.count >= Int(pageSize) { break }
-
-                    let result = try await getModelsUseCase.invoke(
-                        query: query.isEmpty ? nil : query,
-                        tag: includedTags.first,
-                        type: selectedType,
-                        sort: selectedSort,
-                        period: selectedPeriod,
-                        baseModels: baseModelList,
-                        cursor: currentCursor,
-                        limit: KotlinInt(int: pageSize),
-                        nsfw: nsfw
-                    )
-
-                    let allModels = result.items.compactMap { $0 as? Model }
-                    let filtered = applyClientFilters(allModels, viewedIds: viewedIds)
-                    // Deduplicate within batch and against existing models
-                    for model in filtered {
-                        if !accumulatedIds.contains(model.id) {
-                            accumulated.append(model)
-                            accumulatedIds.insert(model.id)
-                        }
-                    }
-                    logger.debug("Iteration \(iteration): fetched=\(allModels.count) filtered=\(filtered.count) accumulated=\(accumulated.count)")
-                    fetchedNextCursor = result.metadata.nextCursor
-                    if fetchedNextCursor == nil || fetchedNextCursor == currentCursor { break }
-                    currentCursor = fetchedNextCursor
-                }
-
+                let result = try await fetchAndAccumulate(isLoadMore: isLoadMore)
                 guard !Task.isCancelled else { return }
 
                 if isLoadMore {
-                    models.append(contentsOf: accumulated)
+                    models.append(contentsOf: result.models)
                 } else {
-                    models = accumulated
+                    models = result.models
                 }
                 logger.debug("Load complete. total models=\(self.models.count) isLoadMore=\(isLoadMore)")
-                nextCursor = fetchedNextCursor
-                hasMore = fetchedNextCursor != nil
+                nextCursor = result.cursor
+                hasMore = result.cursor != nil
                 isLoading = false
                 isLoadingMore = false
             } catch is CancellationError {
@@ -362,6 +316,53 @@ final class ModelSearchViewModel: ObservableObject {
                 isLoadingMore = false
             }
         }
+    }
+
+    private struct FetchResult {
+        let models: [Model]
+        let cursor: String?
+    }
+
+    private func fetchAndAccumulate(isLoadMore: Bool) async throws -> FetchResult {
+        let baseModelList: [BaseModel]? = selectedBaseModels.isEmpty ? nil : Array(selectedBaseModels)
+        let nsfw: KotlinBoolean? = nsfwFilterLevel == .off ? KotlinBoolean(bool: false) : nil
+        let viewedIds: Set<KotlinLong> = isFreshFindEnabled
+            ? try await getViewedModelIdsUseCase.invoke()
+            : []
+
+        var accumulated: [Model] = []
+        var accumulatedIds = Set<Int64>()
+        var currentCursor: String? = isLoadMore ? nextCursor : nil
+        var fetchedNextCursor: String?
+
+        if isLoadMore {
+            accumulatedIds = Set(models.map { $0.id })
+        }
+
+        for iteration in 0..<maxFetchIterations {
+            guard !Task.isCancelled else { break }
+            if accumulated.count >= Int(pageSize) { break }
+
+            let result = try await getModelsUseCase.invoke(
+                query: query.isEmpty ? nil : query,
+                tag: includedTags.first, type: selectedType, sort: selectedSort,
+                period: selectedPeriod, baseModels: baseModelList,
+                cursor: currentCursor, limit: KotlinInt(int: pageSize), nsfw: nsfw
+            )
+
+            let allModels = result.items.compactMap { $0 as? Model }
+            let filtered = applyClientFilters(allModels, viewedIds: viewedIds)
+            for model in filtered where !accumulatedIds.contains(model.id) {
+                accumulated.append(model)
+                accumulatedIds.insert(model.id)
+            }
+            logger.debug("Iteration \(iteration): fetched=\(allModels.count) filtered=\(filtered.count) accumulated=\(accumulated.count)")
+            fetchedNextCursor = result.metadata.nextCursor
+            if fetchedNextCursor == nil || fetchedNextCursor == currentCursor { break }
+            currentCursor = fetchedNextCursor
+        }
+
+        return FetchResult(models: accumulated, cursor: fetchedNextCursor)
     }
 
     private func applyClientFilters(

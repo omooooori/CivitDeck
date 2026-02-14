@@ -930,7 +930,7 @@ private fun ModelSearchContent(
         indicator = {
             PullToRefreshDefaults.Indicator(
                 state = pullToRefreshState,
-                isRefreshing = uiState.isRefreshing,
+                isRefreshing = refreshState is LoadState.Loading && lazyPagingItems.itemCount > 0,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(top = topPadding),
