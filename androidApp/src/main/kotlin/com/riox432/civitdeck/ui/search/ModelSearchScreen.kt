@@ -131,6 +131,7 @@ fun ModelSearchScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val searchHistory by viewModel.searchHistory.collectAsStateWithLifecycle()
+    val gridColumns by viewModel.gridColumns.collectAsStateWithLifecycle()
     val gridState = rememberLazyGridState()
     val headerState = rememberCollapsibleHeaderState()
 
@@ -156,6 +157,7 @@ fun ModelSearchScreen(
         gridState = gridState,
         viewModel = viewModel,
         onModelClick = onModelClick,
+        gridColumns = gridColumns,
     )
 }
 
@@ -196,6 +198,7 @@ private fun SearchScreenBody(
     gridState: LazyGridState,
     viewModel: ModelSearchViewModel,
     onModelClick: (Long, String?, String) -> Unit,
+    gridColumns: Int,
 ) {
     val layoutDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
@@ -221,6 +224,7 @@ private fun SearchScreenBody(
             onHideModel = viewModel::onHideModel,
             topPadding = topPadding,
             bottomPadding = padding.calculateBottomPadding(),
+            gridColumns = gridColumns,
         )
 
         CollapsibleHeader(
@@ -834,6 +838,7 @@ private fun ModelSearchContent(
     onHideModel: (Long, String) -> Unit,
     topPadding: androidx.compose.ui.unit.Dp = 0.dp,
     bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
+    gridColumns: Int = 2,
 ) {
     val isInitialLoading = uiState.models.isEmpty() &&
         (uiState.isLoading || uiState.isLoadingRecommendations)
@@ -880,6 +885,7 @@ private fun ModelSearchContent(
                         onHideModel = onHideModel,
                         topPadding = topPadding,
                         bottomPadding = bottomPadding,
+                        gridColumns = gridColumns,
                     )
                 }
             }
@@ -898,9 +904,10 @@ private fun ModelGrid(
     onHideModel: (Long, String) -> Unit,
     topPadding: androidx.compose.ui.unit.Dp = 0.dp,
     bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
+    gridColumns: Int = 2,
 ) {
     LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
+        columns = GridCells.Fixed(gridColumns),
         state = gridState,
         contentPadding = PaddingValues(
             start = Spacing.md,
@@ -914,7 +921,7 @@ private fun ModelGrid(
         recommendations.forEachIndexed { index, section ->
             item(
                 key = "rec_${section.title}",
-                span = { GridItemSpan(2) },
+                span = { GridItemSpan(maxLineSpan) },
             ) {
                 RecommendationRow(
                     section = section,
@@ -960,15 +967,13 @@ private fun ModelCardWithContextMenu(
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
-    Box(modifier = modifier) {
-        ModelCard(
-            model = model,
+    Box(
+        modifier = modifier.combinedClickable(
             onClick = onClick,
-            modifier = Modifier.combinedClickable(
-                onClick = onClick,
-                onLongClick = { showMenu = true },
-            ),
-        )
+            onLongClick = { showMenu = true },
+        ),
+    ) {
+        ModelCard(model = model)
         DropdownMenu(
             expanded = showMenu,
             onDismissRequest = { showMenu = false },
