@@ -36,6 +36,7 @@ import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.crossfade
 import com.riox432.civitdeck.domain.model.Model
+import com.riox432.civitdeck.domain.model.thumbnailUrl
 import com.riox432.civitdeck.ui.navigation.LocalSharedTransitionScope
 import com.riox432.civitdeck.ui.navigation.SharedElementKeys
 import com.riox432.civitdeck.ui.theme.CornerRadius
@@ -80,7 +81,7 @@ fun ModelCard(
 private fun ModelCardContent(model: Model, sharedElementSuffix: String) {
     Column {
         val imageUrls = model.modelVersions
-            .firstOrNull()?.images?.map { it.url } ?: emptyList()
+            .firstOrNull()?.images?.map { it.thumbnailUrl() } ?: emptyList()
         var currentImageIndex by remember { mutableIntStateOf(0) }
         val thumbnailUrl = imageUrls.getOrNull(currentImageIndex)
 
